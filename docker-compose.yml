@@ -29,9 +29,11 @@ services:
     volumes:
       - db-data:/var/lib/mysql
       # Phase B: the official MySQL image runs any *.sql in this directory on first
-      # start of an empty data dir. Restoring the Phase-A dump here makes the app come
-      # up already installed (Admin / admin123). Produce seed.sql once via Phase A.
-      # - ./db/seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+      # start of an empty data dir. Restoring the Phase-A dump makes the app come up
+      # already populated, with Admin / admin123 and weak-password enforcement off
+      # (so admin123 logs straight into the dashboard, mirroring the public demo).
+      # Produced once via Phase A — see db/README.md.
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
 
   web:
     # Pinned to the current stable OSS release. As of 2026-04-06 this digest is the
@@ -43,11 +45,15 @@ services:
         condition: service_healthy
     ports:
       - "8080:80"                    # BASE_URL=http://localhost:8080
-    # No database env vars: the image does not consume them. The installer (first boot)
-    # or a restored DB dump points OrangeHRM at the db service below
-    # (host: db, name: orangehrm, user: orangehrm).
+    # No database env vars: the image does not consume them. OrangeHRM is told which
+    # database to use by lib/confs/Conf.php, written by the installer in Phase A and
+    # captured under provisioning/. Mounting it (with the restored seed.sql DB) makes
+    # the app boot already installed on ANY fresh start — including a clean CI runner,
+    # where the app volume would otherwise be empty and the app would re-run the
+    # installer despite a populated database. See db/README.md.
     volumes:
       - app-data:/var/www/html       # the image declares VOLUME /var/www/html
+      - ./provisioning/Conf.php:/var/www/html/lib/confs/Conf.php:ro
     healthcheck:
       # Confirms the web server is up. It does not confirm the app is installed: before
       # install, requests redirect to the installer. Treat "installed" as a separate gate.

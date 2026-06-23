@@ -97,15 +97,23 @@ already running with an empty `orangehrm` database, and the installer writes the
 admin user into it. The design has two phases so that the per-run path is automated and
 deterministic.
 
-### Phase A — seed once (one-time, manual)
+### Phase A — seed once (one-time)
 
 1. `docker compose up`: the app image and an empty MySQL start together.
-2. Open the app; it serves the web installer. Point it at the `db` service and create the admin
-   account as `Admin / admin123` to mirror the public demo.
-3. The installer writes the schema and the `Admin` user into MySQL. The app is now installed.
-4. Dump the populated database (`mysqldump`) to `seed.sql` and commit it to the repository.
+2. Drive the web installer against the `db` service (automated by
+   `provisioning/phase-a-install.mjs`). The installer **rejects weak passwords**, so the
+   admin account is created with a compliant password (`Admin@123`), not `admin123`.
+3. The installer writes the schema and the `Admin` user into MySQL, and `lib/confs/Conf.php`
+   into the app. The app is now installed.
+4. Apply **demo parity** so `Admin / admin123` works exactly as on the public demo: rewrite
+   the stored admin hash to `admin123`, and set
+   `auth.password_policy.enforce_password_strength = off` (otherwise login redirects to a
+   forced weak-password change). Then capture `provisioning/Conf.php` and `mysqldump` the
+   database to `db/seed.sql`. Full commands in `db/README.md`.
 
-This happens once. The installer is never part of a test run.
+This happens once. The installer is never part of a test run. The captured `Conf.php` is what
+lets the app boot already installed on a fresh start (a clean CI runner has an empty app
+volume and would otherwise re-run the installer despite a populated database).
 
 ### Phase B — run many (every run, automated)
 
