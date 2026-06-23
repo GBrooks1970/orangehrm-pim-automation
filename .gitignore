@@ -2,6 +2,9 @@
 node_modules/
 npm-debug.log*
 
+# Phase A provisioning scratch (one-off installer exploration; not part of the suite)
+tmp-phaseA/
+
 # TypeScript build output
 dist/
 *.tsbuildinfo
