@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "test": "cucumber-js --profile default --tags \"not @deferred\"",
-    "test:report": "serenity-bdd run --features docs/reports",
+    "test:report": "serenity-bdd run --source ./docs/reports --features ./features",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

@@ -25,5 +25,11 @@ a UI scenario fails, it is the UI behaviour at fault, not the fixture.
 
 ## Concrete example
 
-`<to fill once implemented: the OrangeHrmApiClient authenticate-and-seed call backing the
-"an employee exists" Background step>`
+`src/api/OrangeHrmApiClient.ts` runs the session-cookie login exchange once
+(`OrangeHrm.authenticate()` in the `BeforeAll` hook): it reads the CSRF `_token` from the
+login page, POSTs it with the credentials to `auth/validate`, and keeps the resulting
+`_orangehrm` session cookie. That cookie both authorises the seed calls
+(`ensureEmployeeExists` POSTing to `api/v2/pim/employees`, backing the `an employee "X" exists`
+Background step) and is injected into the browser by `LogInAsAdmin`, so scenarios start
+authenticated without re-driving the login form. The add, search, edit and delete behaviours
+still exercise the UI.

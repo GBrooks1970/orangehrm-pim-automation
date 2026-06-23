@@ -1,9 +1,10 @@
-# E2E workflow (skeleton). Provisions the OrangeHRM stack, warms it, runs the active
-# suite against the local target, and publishes the Serenity living-documentation
-# report to GitHub Pages on main.
+# E2E workflow. Provisions the local OrangeHRM stack from the committed seed,
+# warms the cold SPA, runs the active suite against it, and publishes the Serenity
+# living-documentation report to GitHub Pages on main.
 #
-# This is a scaffold. The implementation step (docs/implementation-plan.md) pins the
-# image tag, confirms the install/seed path, and verifies the warm-up URLs.
+# Provisioning is automatic: docker-compose mounts db/seed.sql and provisioning/
+# Conf.php, so `docker compose up --wait` brings the app up already installed with
+# Admin / admin123 — no installer (see docs/docker-image-decision.md, db/README.md).
 
 name: e2e
 
@@ -14,8 +15,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
   e2e:
@@ -31,11 +30,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Step 1: Start the stack and block on healthchecks (DB up, web installer done).
+      # Playwright's Chromium is not bundled with the npm package; install the
+      # browser (and its OS libraries) the suite drives.
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Start the stack and block on healthchecks. The MySQL init restores
+      # db/seed.sql on first start of the empty data dir, so "db healthy" means the
+      # seed is in place; the app reads provisioning/Conf.php and boots installed.
       - name: Start OrangeHRM
         run: docker compose up -d --wait
 
-      # Step 2: Smoke-check and warm up. The Vue SPA and PHP OPcache pay a first-render
+      # Smoke-check and warm up. The Vue SPA and PHP OPcache pay a first-render
       # penalty on a cold boot; priming the login and PIM pages pays it outside any
       # assertion.
       - name: Warm up
@@ -43,19 +49,53 @@ jobs:
           curl -sf http://localhost:8080/web/index.php/auth/login -o /dev/null
           curl -sf http://localhost:8080/web/index.php/pim/viewEmployeeList -o /dev/null || true
 
-      # Step 3: Run the active suite against the local target.
+      # Run the active suite (excludes @deferred) against the local target. CI
+      # default for screenshots is `failures` (see src/config/screenshots.ts).
       - name: Run suite
         env:
           BASE_URL: http://localhost:8080
         run: npm test
 
-      # Step 4: Render the report and publish it (main only).
+      # Guard against publishing an empty-shell report: the ArtifactArchiver must
+      # have written Serenity JSON. A starved stdout formatter (only one is allowed)
+      # would silently produce none — render only when there is real run data.
+      - name: Verify report data exists
+        if: always()
+        run: |
+          count=$(find docs/reports -name 'scenario-*.json' -size +2c | wc -l)
+          echo "Serenity scenario JSON files: ${count}"
+          test "${count}" -gt 0
+
+      # Render the HTML living documentation (Java 11+ is pre-installed on
+      # ubuntu-latest; serenity-bdd writes to target/site/serenity/). Runs even on
+      # test failure so reviewers can inspect the failing run.
       - name: Generate living documentation
-        if: ${{ always() }}
+        if: always()
         run: npm run test:report
 
-      - name: Publish to GitHub Pages
-        if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Upload Pages artifact
+        if: always()
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/reports
+          path: target/site/serenity
+
+      - name: Tear down stack
+        if: always()
+        run: docker compose down -v
+
+  # Publish the living documentation to GitHub Pages from main, even on a failed
+  # run, so a broken build still produces a visible, clickable report.
+  deploy-pages:
+    needs: e2e
+    if: ${{ github.ref == 'refs/heads/main' && always() }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

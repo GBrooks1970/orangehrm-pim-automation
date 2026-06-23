@@ -26,5 +26,9 @@ would suffice, but this journey is not read-only.
 
 ## Concrete example
 
-`<to fill once implemented: the pinned image tag and the seeded starting state the suite
-asserts against>`
+`docker-compose.yml` pins `orangehrm/orangehrm:5.8.1` and mounts `db/seed.sql` plus
+`provisioning/Conf.php`, so `docker compose up` restores a known starting state — installed,
+with `Admin / admin123` reaching the dashboard (weak-password enforcement off, mirroring the
+public demo) and one baseline employee. The suite then seeds its own per-scenario employees
+through the API and drives PIM against this controllable target. See `db/README.md` for the
+seed-once / restore-many flow.

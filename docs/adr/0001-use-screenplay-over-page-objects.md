@@ -26,5 +26,11 @@ check, a Page Object would be the lighter fit.
 
 ## Concrete example
 
-`<to fill once implemented: the AddEmployee Task composing Interactions across the form and
-the personal-details record>`
+`src/tasks/AddEmployee.ts` reads as intent — `AddEmployee.named('Aurora', 'Vega')` —
+composing small Interactions (`Enter.theValue(...).into(AddEmployeePage.firstNameField)`,
+`Click.on(AddEmployeePage.saveButton)`) and waiting on the SPA route to the record
+(`Wait.upTo(...).until(PersonalDetailsPage.nameHeading, isVisible())`). Element location lives
+in `src/interactions/` (e.g. `AddEmployeePage`, `PersonalDetailsPage`), assertions are
+Questions (`src/questions/PersonalDetails.ts`, `EmployeeListRows.ts`). The same vocabulary
+recomposes for the management and validation features (`SearchForEmployee`, `OpenEmployeeRecord`,
+`EditPersonalDetails`, `DeleteEmployee`) without growing a monolithic page class.

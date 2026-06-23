@@ -69,15 +69,20 @@ SDD ordering is correct by construction.
 - [x] CI skeleton present, shaped to local Docker provisioning.
 - [x] `docs/implementation-plan.md` written and actionable.
 - [x] No hard waits, no UI mechanics, and no toast-only assertions in the feature files.
-- [ ] Two commits exist (specs first, then scaffold), done at repository initialisation on a
-      native filesystem.
+- [x] Two commits exist (specs first, then scaffold), done at repository initialisation on a
+      native filesystem. The history then continues spec-first: project setup, Phase A
+      provisioning, then one implementation commit per feature.
 
 ## Longer-term: portfolio-credibility checklist
 
-- [ ] Commit history shows specs before implementation, kept that way.
-- [ ] ADRs justify Screenplay-over-POM, the local target, and API setup, each with a concrete
-      example once the code exists.
-- [ ] Green CI badge on a non-flaky PIM E2E suite.
-- [ ] Living documentation published and clickable.
-- [ ] Style guide carries the bad-to-good refactor (done).
-- [ ] A quarantine demonstration: if any scenario turns flaky, quarantine and annotate it.
+- [x] Commit history shows specs before implementation, kept that way.
+- [x] ADRs justify Screenplay-over-POM, the local target, and API setup, each with a concrete
+      example now that the code exists (see `docs/adr/000{1,2,3}`).
+- [~] Green CI badge on a non-flaky PIM E2E suite. The suite is green and deterministic locally
+      (`npm test` → 7/7, re-run stable); `ci.yml` is wired to run it on the local target. The
+      badge appears after the first push to a GitHub remote.
+- [~] Living documentation published and clickable. `npm run test:report` renders the Serenity
+      HTML; `ci.yml` deploys it to GitHub Pages from `main`. Published once pushed.
+- [x] Style guide carries the bad-to-good refactor (done).
+- [ ] A quarantine demonstration: no scenario is flaky today, so none is quarantined. The
+      mechanism is in place — the `default` and `smoke` profiles already exclude `@deferred`.

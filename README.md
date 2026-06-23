@@ -48,5 +48,9 @@ local Dockerised OrangeHRM). See `docs/architecture.md` for the full picture and
 
 ## Status
 
-Scaffold. Feature specifications and project documents are in place; the Screenplay
-implementation is the next step. See `docs/implementation-plan.md`.
+Implemented and green. All 7 active scenarios pass against the local Dockerised target
+(`npm test` → 7/7, deterministic across re-runs), covering add-employee (with and without
+login details), search, update nationality, delete, and the missing-last-name and duplicate-id
+validations. Provisioning is automated (`docker compose up` restores the seeded target and
+boots installed); CI runs the suite and publishes the Serenity living documentation. See
+`docs/implementation-plan.md` and `db/README.md`.
