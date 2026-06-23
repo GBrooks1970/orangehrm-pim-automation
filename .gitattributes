@@ -1,0 +1,8 @@
+# Normalise all text to LF. The runtime is Linux (Docker containers, GitHub
+# Actions) while development is on Windows, so committing CRLF would corrupt
+# files consumed on Linux — notably db/seed.sql (restored by MySQL initdb) and
+# provisioning/Conf.php (read by PHP in the container).
+* text=auto eol=lf
+
+# Treat the database snapshot as a large generated artifact, not diff noise.
+db/seed.sql linguist-generated=true
