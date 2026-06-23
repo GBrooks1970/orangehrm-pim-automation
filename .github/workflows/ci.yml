@@ -1,0 +1,61 @@
+# E2E workflow (skeleton). Provisions the OrangeHRM stack, warms it, runs the active
+# suite against the local target, and publishes the Serenity living-documentation
+# report to GitHub Pages on main.
+#
+# This is a scaffold. The implementation step (docs/implementation-plan.md) pins the
+# image tag, confirms the install/seed path, and verifies the warm-up URLs.
+
+name: e2e
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 1: Start the stack and block on healthchecks (DB up, web installer done).
+      - name: Start OrangeHRM
+        run: docker compose up -d --wait
+
+      # Step 2: Smoke-check and warm up. The Vue SPA and PHP OPcache pay a first-render
+      # penalty on a cold boot; priming the login and PIM pages pays it outside any
+      # assertion.
+      - name: Warm up
+        run: |
+          curl -sf http://localhost:8080/web/index.php/auth/login -o /dev/null
+          curl -sf http://localhost:8080/web/index.php/pim/viewEmployeeList -o /dev/null || true
+
+      # Step 3: Run the active suite against the local target.
+      - name: Run suite
+        env:
+          BASE_URL: http://localhost:8080
+        run: npm test
+
+      # Step 4: Render the report and publish it (main only).
+      - name: Generate living documentation
+        if: ${{ always() }}
+        run: npm run test:report
+
+      - name: Publish to GitHub Pages
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/reports

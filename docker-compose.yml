@@ -1,0 +1,61 @@
+# Local OrangeHRM stack. Provides the controllable, resettable target the suite
+# asserts against, so tests never depend on the shared public demo.
+#
+# Two images are required. The official orangehrm/orangehrm image is the PHP/Apache
+# application ONLY (its Dockerfile is php:8.3-apache with pdo_mysql); it does not bundle
+# a database, so a separate MySQL service hosts the data.
+#
+# The official image has NO unattended-install entrypoint and does not read database
+# environment variables. On first boot the app serves the web installer wizard, where
+# the database connection AND the admin account are entered by hand. A vanilla install
+# does NOT create the demo's "Admin / admin123" user; that credential is seeded only on
+# the public demo. To match it, set Admin / admin123 in the installer, then snapshot the
+# resulting database and restore that dump in CI for a known starting state (backlog #1,
+# docs/docker-image-decision.md).
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpass}
+      MYSQL_DATABASE: orangehrm
+      MYSQL_USER: orangehrm
+      MYSQL_PASSWORD: ${DB_PASSWORD:-orangehrm}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - db-data:/var/lib/mysql
+      # Phase B: the official MySQL image runs any *.sql in this directory on first
+      # start of an empty data dir. Restoring the Phase-A dump here makes the app come
+      # up already installed (Admin / admin123). Produce seed.sql once via Phase A.
+      # - ./db/seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+
+  web:
+    # Pinned to the current stable OSS release. As of 2026-04-06 this digest is the
+    # same image as :latest; pinning the exact patch keeps runs deterministic when
+    # :latest later moves. See docs/docker-image-decision.md.
+    image: orangehrm/orangehrm:5.8.1
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:80"                    # BASE_URL=http://localhost:8080
+    # No database env vars: the image does not consume them. The installer (first boot)
+    # or a restored DB dump points OrangeHRM at the db service below
+    # (host: db, name: orangehrm, user: orangehrm).
+    volumes:
+      - app-data:/var/www/html       # the image declares VOLUME /var/www/html
+    healthcheck:
+      # Confirms the web server is up. It does not confirm the app is installed: before
+      # install, requests redirect to the installer. Treat "installed" as a separate gate.
+      test: ["CMD", "curl", "-sf", "-o", "/dev/null", "http://localhost:80/"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  db-data:
+  app-data:

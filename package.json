@@ -1,0 +1,26 @@
+{
+  "name": "orangehrm-pim-automation",
+  "version": "0.1.0",
+  "description": "E2E automation for the OrangeHRM PIM module using SDD, BDD and the Screenplay pattern (Serenity/JS + Playwright + Cucumber)",
+  "license": "GPL-3.0",
+  "private": true,
+  "scripts": {
+    "test": "cucumber-js --profile default --tags \"not @deferred\"",
+    "test:report": "serenity-bdd run --features docs/reports",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.0.0",
+    "@serenity-js/core": "^3.43.0",
+    "@serenity-js/cucumber": "^3.43.0",
+    "@serenity-js/playwright": "^3.43.0",
+    "@serenity-js/rest": "^3.43.0",
+    "@serenity-js/serenity-bdd": "^3.43.0",
+    "@serenity-js/web": "^3.43.0",
+    "@types/node": "^20.0.0",
+    "playwright": "^1.60.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.4.0"
+  },
+  "//": "Versions are indicative scaffolding pins; the implementation step (see docs/implementation-plan.md) installs and locks them."
+}

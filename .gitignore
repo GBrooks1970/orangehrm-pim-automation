@@ -1,0 +1,25 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# TypeScript build output
+dist/
+*.tsbuildinfo
+
+# Playwright
+/playwright-report/
+/test-results/
+.cache/
+
+# Serenity/JS artifacts and living-documentation output
+docs/reports/*
+!docs/reports/.gitkeep
+target/
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
