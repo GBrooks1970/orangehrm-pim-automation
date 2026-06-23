@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@cucumber/cucumber": "^11.0.0",
+    "@serenity-js/console-reporter": "^3.43.0",
     "@serenity-js/core": "^3.43.0",
     "@serenity-js/cucumber": "^3.43.0",
     "@serenity-js/playwright": "^3.43.0",
@@ -18,7 +19,7 @@
     "@serenity-js/serenity-bdd": "^3.43.0",
     "@serenity-js/web": "^3.43.0",
     "@types/node": "^20.0.0",
-    "playwright": "^1.60.0",
+    "playwright": "1.60.0",
     "ts-node": "^10.9.0",
     "typescript": "^5.4.0"
   },
