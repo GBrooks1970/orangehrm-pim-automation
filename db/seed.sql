@@ -1,3 +1,9 @@
+-- OrangeHRM 5.8.1 database snapshot for deterministic local test automation.
+-- Generated and modified on 23 June 2026: the Admin test credential and password-policy
+-- settings were changed to reproduce the public demo contract. See db/README.md.
+-- OrangeHRM-derived material is provided under GPL-3.0-or-later; see LICENSE and
+-- THIRD_PARTY_NOTICES.md.
+--
 -- MySQL dump 10.13  Distrib 8.0.46, for Linux (x86_64)
 --
 -- Host: localhost    Database: orangehrm
