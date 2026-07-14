@@ -54,3 +54,12 @@ login details), search, update nationality, delete, and the missing-last-name an
 validations. Provisioning is automated (`docker compose up` restores the seeded target and
 boots installed); CI runs the suite and publishes the Serenity living documentation. See
 `docs/implementation-plan.md` and `db/README.md`.
+
+## Licence
+
+[GNU General Public License v3.0 or later](LICENSE) — © 2026 Gary Brooks.
+
+The repository includes OrangeHRM-derived provisioning artifacts under the same GPL-or-later
+terms. Their upstream attribution, provenance, and local modification boundary are recorded in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Container images and installed dependencies
+remain subject to their respective licence terms.

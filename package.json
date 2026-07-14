@@ -2,7 +2,7 @@
   "name": "orangehrm-pim-automation",
   "version": "0.1.0",
   "description": "E2E automation for the OrangeHRM PIM module using SDD, BDD and the Screenplay pattern (Serenity/JS + Playwright + Cucumber)",
-  "license": "GPL-3.0",
+  "license": "GPL-3.0-or-later",
   "private": true,
   "scripts": {
     "test": "cucumber-js --profile default --tags \"not @deferred\"",
