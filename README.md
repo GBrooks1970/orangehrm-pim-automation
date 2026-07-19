@@ -23,6 +23,7 @@ of band. It is a fair test of architecture, not just of clicking.
 - **BDD runner:** Cucumber
 - **SUT:** OrangeHRM Open Source (Starter), provisioned locally via Docker; the public
   demo at `https://opensource-demo.orangehrmlive.com` serves as a read-only smoke target.
+- **Node.js:** 20 or newer (matches CI and `@types/node`).
 
 ## Run instructions
 
