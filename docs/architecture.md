@@ -137,7 +137,7 @@ row), never the transient success toast that flashes after save.
 
 ## 6. Known issues and technical debt
 
-This is a fresh scaffold. Open items are tracked in `docs/backlog.md`; the build order from
-here is in `docs/implementation-plan.md`. The one decision to confirm early is the local
-image tag and seeded-database path (backlog #1), because the whole suite asserts against
-that target.
+The suite has been built to green since 2026-06-23. Open items are tracked in
+`docs/backlog.md` (currently none — all items #1–#6 closed); the historical build order is
+recorded in `docs/implementation-plan.md`. The local image tag and seeded-database path
+(backlog #1) that the whole suite asserts against was confirmed during that build.

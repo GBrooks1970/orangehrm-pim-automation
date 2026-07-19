@@ -95,5 +95,6 @@ npm run test:report
 
 ## 7. Open improvements
 
-Tracked in `docs/backlog.md`. The first is pinning the local image tag and the seeded-database
-path, because the suite asserts against that target. Nothing else is open at scaffold stage.
+Tracked in `docs/backlog.md` — currently none open; all items #1–#6 are closed. The local image
+tag and seeded-database path the suite asserts against (backlog #1) was confirmed during the
+2026-06-23 build.

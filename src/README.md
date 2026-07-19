@@ -10,12 +10,13 @@ one rarely forces a change in another.
   form, employee list, personal-details).
 - `tasks/` — composed, intent-named activities (`LogInAsAdmin`, `AddEmployee`,
   `SearchForEmployee`, `EditPersonalDetails`, `DeleteEmployee`).
-- `questions/` — state reads (`EmployeeListRows`, `PersonalDetailsName`,
+- `questions/` — state reads (`EmployeeListRows`, `PersonalDetails`,
   `ValidationMessage`).
 - `api/` — `OrangeHrmApiClient.ts`: session-cookie auth plus employee seed and verify
   against REST API v2.
 - `actors/` — reserved; actor setup is handled via hooks.
 - `step-definitions/` — thin glue between Gherkin and Tasks, grouped by feature area.
 
-The folders carry `.gitkeep` until the implementation step fills them. See
-`docs/screenplay-guide.md` and `docs/implementation-plan.md`.
+All folders above are now filled; `actors/` remains empty by design (actor setup is handled
+via hooks) and keeps its `.gitkeep` for that reason. See `docs/screenplay-guide.md` and
+`docs/implementation-plan.md`.

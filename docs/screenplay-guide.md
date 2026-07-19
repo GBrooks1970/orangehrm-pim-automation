@@ -67,7 +67,8 @@ here, out of the feature files, means an OrangeHRM restyle changes one Interacti
 |---|---|
 | `LogInAsAdmin.now()` | UI login, used where login itself matters; most scenarios get the session via the API ability |
 | `AddEmployee.named(first, last)` | Open Add Employee, fill the name, save; optionally toggle login details |
-| `SearchForEmployee.byName(name)` | Enter the employee-list filter, wait for the debounced result |
+| `SearchForEmployee.selecting(name)` | Enter the employee-list filter, wait for and select the matching autocomplete suggestion, then search |
+| `SearchForEmployee.byNameText(name)` | Enter the filter, wait for the autocomplete to settle (no match), search on the typed text — for confirming an absence |
 | `EditPersonalDetails.setNationality(value)` | Open the record, set nationality, save |
 | `DeleteEmployee.named(name)` | Select the row, confirm deletion |
 
@@ -98,7 +99,7 @@ the option to render before asserting or selecting:
 
 ```typescript
 Enter.theValue(name).into(EmployeeListPage.nameFilter),
-Wait.upTo(Duration.ofSeconds(10)).until(EmployeeListPage.firstResultRow, isVisible()),
+Wait.upTo(Duration.ofSeconds(15)).until(EmployeeListPage.firstAutocompleteOption, isVisible()),
 ```
 
 ## Troubleshooting

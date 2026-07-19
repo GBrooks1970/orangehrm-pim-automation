@@ -1,5 +1,9 @@
 # Implementation plan
 
+> **Completed 2026-06-23.** This plan was executed in full; the suite has been green since —
+> see `docs/implementation-logs/2026-06-23_build-to-green.md` for the build narrative. Retained
+> below as a historical record of the original plan, not a description of current state.
+
 This plan takes the scaffold to a green PIM suite without re-deriving any decision. Execute
 the steps in order. Every new capability is two commits: the spec on its own, then the
 implementation that references the scenario it satisfies.
