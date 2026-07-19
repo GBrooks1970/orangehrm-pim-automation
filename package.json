@@ -4,6 +4,9 @@
   "description": "E2E automation for the OrangeHRM PIM module using SDD, BDD and the Screenplay pattern (Serenity/JS + Playwright + Cucumber)",
   "license": "GPL-3.0-or-later",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "cucumber-js --profile default --tags \"not @deferred\"",
     "test:report": "serenity-bdd run --source ./docs/reports --features ./features",
