@@ -1,10 +1,8 @@
 import { BeforeAll, Before, AfterAll, setDefaultTimeout } from '@cucumber/cucumber';
 import { Cast, engage } from '@serenity-js/core';
 import { BrowseTheWebWithPlaywright } from '@serenity-js/playwright';
-import { CallAnApi } from '@serenity-js/rest';
 import { chromium } from 'playwright';
 import type { Browser } from 'playwright';
-import { BASE_URL } from '../serenity.config';
 import { OrangeHrm } from '../api/OrangeHrmApiClient';
 
 // Cucumber's default per-step timeout is 5 s. An OrangeHRM PIM step combines
@@ -59,10 +57,13 @@ Before(async () => {
         await context.clearCookies();
     }
 
+    // API seeding runs through OrangeHrmApiClient's own fetch-based client (see
+    // src/api/OrangeHrmApiClient.ts), not through the Screenplay model — see
+    // docs/adr/0003-api-driven-setup.md for the deliberate rationale. The actor
+    // is only ever given the browsing ability.
     engage(Cast.where(actor =>
         actor.whoCan(
             BrowseTheWebWithPlaywright.using(browser),
-            CallAnApi.at(BASE_URL),
         )
     ));
 });

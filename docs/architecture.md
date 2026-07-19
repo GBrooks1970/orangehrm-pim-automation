@@ -107,7 +107,8 @@ What happens when `npm test` runs:
 5. Once per run: `BeforeAll` launches Chromium and authenticates the API client, holding
    the admin session cookie for seeding.
 6. Per scenario: `Before` resets browser state and engages the actor with
-   `BrowseTheWebWithPlaywright` and `CallAnApi`.
+   `BrowseTheWebWithPlaywright`. API setup (authentication, seeding) runs through a
+   dedicated module-level client, deliberately outside the actor model (ADR-0003).
 7. Cucumber matches steps to `src/step-definitions/`.
 8. Step definitions call `actorCalled('User').attemptsTo(Task...)` or
    `Ensure.that(Question, matcher)`.

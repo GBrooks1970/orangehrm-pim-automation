@@ -27,7 +27,6 @@ Before(async () => {
     engage(Cast.where(actor =>
         actor.whoCan(
             BrowseTheWebWithPlaywright.using(browser),
-            CallAnApi.at(process.env.BASE_URL ?? 'http://localhost:8080'),
         )
     ));
 });
@@ -47,8 +46,10 @@ closed-browser error. Launch once, close once.
 | Ability | Package | Role |
 |---|---|---|
 | `BrowseTheWebWithPlaywright` | `@serenity-js/playwright` | Drive the PIM UI |
-| `CallAnApi` | `@serenity-js/rest` | Authenticate and seed employees via REST API v2 |
 
+The actor is only ever given the browsing ability. API setup (authentication and seeding) runs
+through a dedicated module-level client (`src/api/OrangeHrmApiClient.ts`), deliberately outside
+the Screenplay actor model — see [ADR-0003](adr/0003-api-driven-setup.md) for the rationale.
 OrangeHRM's REST API v2 authenticates with the logged-in session cookie (and a CSRF token
 on writes); the Open Source edition has no static bearer token. So `OrangeHrm.authenticate()`
 performs the login exchange once in `BeforeAll`, captures the session cookie, and reuses it
