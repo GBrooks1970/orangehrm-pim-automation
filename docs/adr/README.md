@@ -9,5 +9,5 @@ trade-off. They exist so a reviewer understands why the suite is shaped as it is
 | [0002](0002-local-docker-target-over-shared-demo.md) | Provision a local Docker target rather than test the shared demo |
 | [0003](0003-api-driven-setup.md) | Set up test data through REST API v2, not the UI |
 
-Each ADR carries a concrete-example marker to be filled with the real artifact once the
-implementation exists.
+Each ADR carries a concrete-example section, filled with the real artifact once the
+implementation existed.

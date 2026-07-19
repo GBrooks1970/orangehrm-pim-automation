@@ -22,6 +22,5 @@
     "playwright": "1.60.0",
     "ts-node": "^10.9.0",
     "typescript": "^5.4.0"
-  },
-  "//": "Versions are indicative scaffolding pins; the implementation step (see docs/implementation-plan.md) installs and locks them."
+  }
 }
