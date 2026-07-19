@@ -44,7 +44,17 @@ npm run test:report
 
 The suite resolves its target from `BASE_URL` (defaults to `http://localhost:8080`, the
 local Dockerised OrangeHRM). See `docs/architecture.md` for the full picture and
-`docs/implementation-plan.md` for the build order from this scaffold to a green suite.
+`docs/implementation-plan.md` for the historical build order (the suite has been green since
+2026-06-23).
+
+**Periodic local reset.** A long-lived local Docker volume accumulates state across runs
+(created/edited/deleted employees). Reset to the seeded baseline with:
+
+```bash
+docker compose down -v && docker compose up -d   # wipes both volumes, restores seed
+```
+
+See `db/README.md` for the full provisioning detail.
 
 ## Status
 
