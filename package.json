@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@cucumber/cucumber": "^11.0.0",
+    "@cucumber/cucumber": "^12.9.0",
     "@serenity-js/console-reporter": "^3.43.0",
     "@serenity-js/core": "^3.43.0",
     "@serenity-js/cucumber": "^3.43.0",
