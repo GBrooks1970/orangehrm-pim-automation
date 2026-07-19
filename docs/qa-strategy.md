@@ -16,11 +16,12 @@
 |---|---|---|---|---|
 | `pim-add-employee.feature` | 2 | Add an employee, with and without login credentials | `@changesState` | Active |
 | `pim-employee-management.feature` | 3 | Search (read-only), update nationality, delete | `@changesState` on update and delete | Active |
-| `pim-validation.feature` | 2 | Missing last name; duplicate employee id | none | Active |
+| `pim-validation.feature` | 2 | Missing last name; duplicate employee id | `@localOnly` on both; `@seedsData` also on the duplicate-id scenario | Active |
 
 **Active scenarios:** 7. **Deferred:** 0.
-**Smoke subset** (`smoke` profile, `not @deferred and not @changesState`): the read-only
-search scenario, the safe subset against the shared public demo.
+**Smoke subset** (`smoke` profile, `not @deferred and not @changesState and not @localOnly and
+not @seedsData`): exactly 1 scenario — the read-only search scenario, the safe subset against
+the shared public demo.
 
 ## 3. Automation gates
 
