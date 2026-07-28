@@ -27,7 +27,7 @@ Items #1–#6 remain closed.
 |---|---|---|---|---|
 | CODEX-01 | High | Record the public-smoke target as local-only until a genuinely read-only fixture exists | Closed (2026-07-28) | ADR-0002 prohibits executing against the shared public demo while selected setup can write and defines the fixture, no-write, contract-test, and documentation gates for restoring support. |
 | CODEX-02 | High | Enforce the local-only smoke boundary in profiles and host safety checks | Closed (2026-07-28) | Every profile loads a pre-browser loopback guard; `test:target-contract` verifies the profile wiring and rejects public, remote, and malformed targets; default and smoke dry-runs remain 7 and 1; current target documentation now describes smoke as local-only. |
-| CODEX-03 | High | Remove the vulnerable Axios path through an aligned Serenity/JS upgrade | Open | The aligned Serenity/JS set removes the reviewed `axios@1.16.0` advisory path; no unaccepted High audit finding remains; typecheck, both dry-runs, clean Docker 7/7, report generation/content, and CI pass. |
+| CODEX-03 | High | Remove the vulnerable Axios path through an aligned Serenity/JS upgrade | Closed (2026-07-28) | Serenity/JS is aligned at 3.44.1 with Playwright 1.61.1 and Node 24; direct unused `@serenity-js/rest` was removed while report tooling retains 3.44.1 transitively with fixed `axios@1.18.1`; `brace-expansion` patched to 5.0.8; `npm audit` reports zero vulnerabilities. CI enforces the High gate, Dependabot proposes grouped updates, and `dependency-policy.md` defines triage and exception evidence. |
 | CODEX-04 | Medium | Enforce TypeScript before browser and Docker setup in CI | Open | `npm run typecheck` runs immediately after `npm ci`; workflow ordering and QA claims agree; workflow syntax and live CI pass. |
 | CODEX-05 | Medium | Prove that issued employee credentials create a usable account | Open | Scenario-scoped data retains the username without reporting the password; supported API/admin verification and an account-specific login outcome fail when account creation is broken. |
 | CODEX-06 | Medium | Add a fast lower-level test lane for session and API helper decisions | Open | Deterministic, SUT-independent tests cover cookie parsing, target-host safety, response classification, duplicate classification, and exact fixture identity; the lane runs before Docker E2E in CI. |
@@ -37,5 +37,6 @@ Items #1–#6 remain closed.
 | CODEX-10 | Low | Prevent persistent local runs from accumulating or misidentifying test records | Open | Scenario-owned employee/account identities are captured and safely deleted or asserted exactly; repeated persistent runs neither grow unmanaged data nor pass against an earlier record. Depends on CODEX-05 and CODEX-07. |
 | CODEX-11 | Low | Reconcile current guides and add low-cost contract checks | Open | Current guides agree on employee identity, authentication, smoke scope, readiness, image pins, and CI; automated checks cover scenario/smoke counts and declared CI commands. Runs after CODEX-01–10. |
 
-**Outstanding:** 9 — 1 High, 6 Medium, 2 Low. CODEX-01 records the decision and CODEX-02
-supplies its executable enforcement; CODEX-03 is next.
+**Outstanding:** 8 — 0 High, 6 Medium, 2 Low. CODEX-01 records the target decision, CODEX-02
+supplies its executable enforcement, and CODEX-03 closes the reviewed dependency risk; CODEX-04
+is next.
