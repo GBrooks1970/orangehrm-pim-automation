@@ -4,6 +4,8 @@ import { BrowseTheWebWithPlaywright } from '@serenity-js/playwright';
 import { chromium } from 'playwright';
 import type { Browser } from 'playwright';
 import { OrangeHrm } from '../api/OrangeHrmApiClient';
+import { assertLocalExecutionTarget } from '../config/target-safety';
+import { BASE_URL } from '../serenity.config';
 
 // Cucumber's default per-step timeout is 5 s. An OrangeHRM PIM step combines
 // network latency with several Vue re-renders against a cold SPA, which can
@@ -20,6 +22,10 @@ setDefaultTimeout(60 * 1000);
 let browser: Browser;
 
 BeforeAll(async () => {
+    // Fail before starting Chromium or authenticating the API client. Every current
+    // profile is local-only because selected setup can write (ADR-0002).
+    assertLocalExecutionTarget(BASE_URL);
+
     browser = await chromium.launch({
         headless: (process.env.HEADLESS ?? 'true') === 'true',
     });

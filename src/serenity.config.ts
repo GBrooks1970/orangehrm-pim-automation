@@ -9,10 +9,10 @@ import createSerenityBDDReporter from '@serenity-js/serenity-bdd';
 import { ConsoleReporter } from '@serenity-js/console-reporter';
 import { photographer } from './config/screenshots';
 
-// The test target. Defaults to the local Dockerised OrangeHRM (ADR-0002); the
-// public demo at opensource-demo.orangehrmlive.com is a read-only smoke target
-// only. OrangeHRM serves its app under /web/index.php — keep BASE_URL the bare
-// origin and build routes with `webUrl()` so the prefix lives in one place.
+// The test target. Every executable profile is restricted to a loopback-hosted,
+// local Dockerised OrangeHRM by browser.hooks.ts (ADR-0002). OrangeHRM serves its
+// app under /web/index.php — keep BASE_URL the bare origin and build routes with
+// `webUrl()` so the prefix lives in one place.
 export const BASE_URL = process.env.BASE_URL ?? 'http://localhost:8080';
 
 /** Build a full OrangeHRM URL from an app-relative path (e.g. 'pim/addEmployee'). */

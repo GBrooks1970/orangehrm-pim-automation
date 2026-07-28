@@ -2,13 +2,13 @@
 // them, compiles TypeScript on the fly via ts-node, and wires Serenity/JS as the
 // reporting and Screenplay layer.
 //
-// The `default` profile runs the active suite. The `smoke` profile runs the demo-safe
-// subset intended for a shared, non-resettable target (the public demo): it excludes
-// quarantined scenarios, any that change state (@changesState), any confined to the
-// local target (@localOnly), and any whose Background seeds data via an API write
-// (@seedsData). This currently narrows smoke to exactly one scenario (employee search)
-// — see docs/backlog.md #4 for that scenario's own remaining Background-seed caveat,
-// which this profile does not resolve, only documents.
+// The `default` profile runs the active suite. The `smoke` profile runs a narrower
+// LOCAL-ONLY subset: it excludes quarantined scenarios, any that change state
+// (@changesState), any explicitly confined to the local target (@localOnly), and
+// scenarios tagged for API seeding (@seedsData). It currently selects one employee-
+// search scenario whose feature Background can still create a missing fixture.
+// Every profile loads the fail-fast loopback guard in browser.hooks.ts; `smoke`
+// describes selection breadth, never permission to target the shared public demo.
 
 const common = [
   'features/**/*.feature',

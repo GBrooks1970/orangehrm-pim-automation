@@ -13,14 +13,13 @@ through the REST API ability in the Background; the behaviour under test drives 
 
 **Active scenarios:** 7. **Deferred:** 0.
 
-**Smoke subset** (`smoke` profile): scenarios that are neither quarantined, state-changing
+**Local smoke subset** (`smoke` profile): scenarios that are neither quarantined, state-changing
 (`@changesState`), confined to the local target (`@localOnly`), nor Background-seeded via an
-API write (`@seedsData`). Exactly **1 scenario** qualifies — the read-only employee search —
-which is the safe subset to run against the shared public demo. Everything else, including
-both `pim-validation.feature` scenarios, runs against the local Dockerised target only. Note:
-the search scenario's own Background still seeds its employee via the API (`docs/backlog.md`
-#4) — a known, separately-tracked caveat this tagging pass does not resolve, only scopes the
-rest of the suite around.
+API write (`@seedsData`). Exactly **1 scenario** qualifies — employee search. Its feature
+Background can still create the employee through the API (`docs/backlog.md` #4), so the profile
+is local-only despite the read-only UI query. Every profile loads a fail-fast loopback guard;
+the shared public demo is not an executable target. The two `pim-validation.feature` scenarios
+remain outside this narrower local selection.
 
 No PIM behaviour here needs a controllable test fixture, so there is no `@deferred`
 scenario in this suite. That is a difference from the Magento reference, where a forced

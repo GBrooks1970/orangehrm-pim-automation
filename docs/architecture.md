@@ -10,8 +10,8 @@
   adjacent search, edit and delete operations plus add-employee validation.
 - **Stack:** TypeScript + Serenity/JS + Playwright + Cucumber.
 - **Test target:** resolved from `BASE_URL` (defaults to `http://localhost:8080`, the local
-  Dockerised OrangeHRM). The public demo at `https://opensource-demo.orangehrmlive.com` is a
-  read-only smoke target only.
+  Dockerised OrangeHRM). Every executable profile is loopback-only; the shared public demo is
+  not a supported execution target while selected setup can write.
 - **Entry point:** `npm test`, running Cucumber with `--tags "not @deferred"`.
 
 ## 2. Project composition
@@ -21,9 +21,9 @@
 OrangeHRM is external to this repository and not owned by it. The suite knows it through:
 
 - **URL:** the `BASE_URL` environment variable.
-- **Auth:** an HR administrator session. On the demo this is `Admin / admin123`. A vanilla
-  install does not create that user; on the container it is set by hand in the web installer
-  (use `Admin / admin123` to mirror the demo) and then captured in the seeded database
+- **Auth:** an HR administrator session. The seeded local target uses `Admin / admin123` for
+  parity with the public demonstration environment. A vanilla install does not create that
+  user; on the container it is set by hand in the web installer and captured in the seeded database
   snapshot. See `docs/docker-image-decision.md`.
 - **Front end:** a Vue single-page application. Navigation and form steps re-render
   asynchronously from REST API v2 calls, so every transition waits on element state, never
@@ -51,6 +51,8 @@ Organised by Screenplay layer, one folder each:
 | Command | Purpose |
 |---|---|
 | `npm test` | Run the active suite (excludes `@deferred`) |
+| `npm run test:smoke:local` | Run the one-scenario local smoke selection |
+| `npm run test:target-contract` | Prove every profile loads the pre-browser loopback guard |
 | `npx tsc --noEmit` | TypeScript type check |
 | `HEADLESS=false npm test` | Run with a visible browser for debugging |
 | `npm run test:report` | Generate the Serenity living-documentation report |
@@ -66,6 +68,8 @@ orangehrm-pim-automation/
 │   └── pim-validation.feature         # Missing last name; duplicate employee id
 ├── src/
 │   ├── serenity.config.ts             # Reporter crew (no test logic)
+│   ├── config/
+│   │   └── target-safety.ts            # Pure loopback classification + fail-fast guard
 │   ├── hooks/
 │   │   └── browser.hooks.ts           # Browser once (BeforeAll); state reset + engage (Before)
 │   ├── interactions/                  # PageElements: LoginPage, AddEmployeePage, EmployeeListPage, PersonalDetailsPage
@@ -86,6 +90,8 @@ orangehrm-pim-automation/
 │   └── implementation-plan.md
 ├── .github/workflows/
 │   └── ci.yml                         # Start stack → warm-up → suite → publish report
+├── scripts/
+│   └── verify-local-target-contract.ts# Static profile/guard contract check
 ├── docker-compose.yml                 # Local OrangeHRM + MySQL stack
 ├── cucumber.js                        # Cucumber profile — paths, tags, format, ts-node
 ├── tsconfig.json
@@ -104,8 +110,8 @@ What happens when `npm test` runs:
 2. `ts-node/register` compiles TypeScript on the fly.
 3. `src/serenity.config.ts` configures the reporter crew.
 4. `src/hooks/browser.hooks.ts` registers `BeforeAll`, `Before`, `AfterAll`.
-5. Once per run: `BeforeAll` launches Chromium and authenticates the API client, holding
-   the admin session cookie for seeding.
+5. Once per run: `BeforeAll` rejects a non-loopback `BASE_URL` before it launches Chromium or
+   authenticates the API client, then holds the local admin session cookie for seeding.
 6. Per scenario: `Before` resets browser state and engages the actor with
    `BrowseTheWebWithPlaywright`. API setup (authentication, seeding) runs through a
    dedicated module-level client, deliberately outside the actor model (ADR-0003).
@@ -128,7 +134,7 @@ What happens when `npm test` runs:
 | Employee Id auto-fill | Read or override the auto-filled Employee Id deliberately | The form pre-fills the next Id; assertions and the duplicate-id case depend on a known value | `AddEmployee` task |
 | Autocomplete search | Wait for the result option to render before selecting | The employee-name search is a debounced async autocomplete | Task-level wait |
 | Data setup | Seed employees through REST API v2, not the UI | UI creation is slow and is the behaviour under test elsewhere | ADR-0003 |
-| Shared demo non-determinism | Provision a local Docker target for state-changing runs | The public demo is shared, periodically reset, and may reject writes | ADR-0002 |
+| Shared demo non-determinism | Reject every non-loopback execution target before browser/API setup | The public demo is shared and even the smoke Background can conditionally write | ADR-0002, `target-safety.ts` |
 | Stable assertion | Assert on employee identity (full name + Employee Id), not transient toasts | The post-save success toast is timing-sensitive and disappears; the record and list row are stable | questions, gherkin-style-guide |
 
 The PIM analogue of the Magento "assert the subtotal, never the grand total" rule is:
@@ -138,6 +144,6 @@ row), never the transient success toast that flashes after save.
 ## 6. Known issues and technical debt
 
 The suite has been built to green since 2026-06-23. Open items are tracked in
-`docs/backlog.md` (currently none — all items #1–#6 closed); the historical build order is
+`docs/backlog.md` (Items #1–#6 and CODEX-01/02 are closed; CODEX-03–11 remain open); the historical build order is
 recorded in `docs/implementation-plan.md`. The local image tag and seeded-database path
 (backlog #1) that the whole suite asserts against was confirmed during that build.
