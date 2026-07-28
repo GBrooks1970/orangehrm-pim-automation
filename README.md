@@ -23,7 +23,7 @@ of band. It is a fair test of architecture, not just of clicking.
 - **BDD runner:** Cucumber
 - **SUT:** OrangeHRM Open Source (Starter), provisioned locally via Docker. Every executable
   profile is loopback-only; the shared public demo is reference material, not a test target.
-- **Node.js:** 20 or newer (matches CI and `@types/node`).
+- **Node.js:** 24.x (matches Serenity/JS, CI, `.nvmrc`, and `@types/node`).
 
 ## Run instructions
 
@@ -38,6 +38,9 @@ npm run test:smoke:local
 
 # Verify that every profile loads the loopback guard
 npm run test:target-contract
+
+# Audit the locked development/test toolchain
+npm audit --audit-level=high
 
 # Visible browser, for debugging
 HEADLESS=false npm test
@@ -64,7 +67,8 @@ See `docs/architecture.md` for the full picture and
 docker compose down -v && docker compose up -d   # wipes both volumes, restores seed
 ```
 
-See `db/README.md` for the full provisioning detail.
+See `db/README.md` for the full provisioning detail and
+`docs/dependency-policy.md` for dependency/audit handling.
 
 ## Status
 

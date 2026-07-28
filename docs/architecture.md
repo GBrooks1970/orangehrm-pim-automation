@@ -53,6 +53,7 @@ Organised by Screenplay layer, one folder each:
 | `npm test` | Run the active suite (excludes `@deferred`) |
 | `npm run test:smoke:local` | Run the one-scenario local smoke selection |
 | `npm run test:target-contract` | Prove every profile loads the pre-browser loopback guard |
+| `npm audit --audit-level=high` | Gate the locked test/report toolchain against High advisories |
 | `npx tsc --noEmit` | TypeScript type check |
 | `HEADLESS=false npm test` | Run with a visible browser for debugging |
 | `npm run test:report` | Generate the Serenity living-documentation report |
@@ -86,6 +87,7 @@ orangehrm-pim-automation/
 │   ├── screenplay-guide.md
 │   ├── gherkin-style-guide.md
 │   ├── qa-strategy.md
+│   ├── dependency-policy.md
 │   ├── backlog.md
 │   └── implementation-plan.md
 ├── .github/workflows/

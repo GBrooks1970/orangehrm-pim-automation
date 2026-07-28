@@ -25,11 +25,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Audit high-severity dependencies
+        run: npm audit --audit-level=high
 
       - name: Verify local-only target contract
         run: npm run test:target-contract
