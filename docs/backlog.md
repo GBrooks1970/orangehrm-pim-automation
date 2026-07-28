@@ -11,4 +11,31 @@ Living record of debt and improvements. Closed items keep their resolution and e
 | 5 | Wire screenshots (`SCREENSHOTS=off\|failures\|all`) via the Photographer | Closed | `src/config/screenshots.ts` adds the Photographer as an optional crew member; default `all` locally, `failures` in CI, overridable by `SCREENSHOTS`. |
 | 6 | Publish living documentation to GitHub Pages | Closed | `npm run test:report` renders the Serenity HTML from the JSON in `docs/reports/` to `target/site/serenity/`; `ci.yml` guards for non-empty report data, uploads that path and deploys it to Pages from `main` (Java 11+ is pre-installed on the runner). |
 
-All items #1–#6 are closed.
+Items #1–#6 remain closed.
+
+## CODEX review v1 remediation
+
+- **Added:** 2026-07-28
+- **Source:** `.review/CODE_REVIEW_CODEX_v1_20260724T0001Z/`, reviewed against functional baseline
+  `ea15003` and merged through PR #10 as `c000375`.
+- **Decision:** Until a stable, owner-approved, externally owned fixture exists, every executable
+  profile is local-only when its selected scenario or Background can write. The shared public demo
+  must not be an executable target under that condition; see
+  [ADR-0002](adr/0002-local-docker-target-over-shared-demo.md).
+
+| ID | Priority | Item | Status | Acceptance and dependency |
+|---|---|---|---|---|
+| CODEX-01 | High | Record the public-smoke target as local-only until a genuinely read-only fixture exists | Closed (2026-07-28) | ADR-0002 prohibits executing against the shared public demo while selected setup can write and defines the fixture, no-write, contract-test, and documentation gates for restoring support. |
+| CODEX-02 | High | Enforce the local-only smoke boundary in profiles and host safety checks | Open | Tags/profile naming and a fail-fast host guard prevent public-target mutation; a static contract test proves the boundary; scenario counts and current documentation agree. Depends on CODEX-01. |
+| CODEX-03 | High | Remove the vulnerable Axios path through an aligned Serenity/JS upgrade | Open | The aligned Serenity/JS set removes the reviewed `axios@1.16.0` advisory path; no unaccepted High audit finding remains; typecheck, both dry-runs, clean Docker 7/7, report generation/content, and CI pass. |
+| CODEX-04 | Medium | Enforce TypeScript before browser and Docker setup in CI | Open | `npm run typecheck` runs immediately after `npm ci`; workflow ordering and QA claims agree; workflow syntax and live CI pass. |
+| CODEX-05 | Medium | Prove that issued employee credentials create a usable account | Open | Scenario-scoped data retains the username without reporting the password; supported API/admin verification and an account-specific login outcome fail when account creation is broken. |
+| CODEX-06 | Medium | Add a fast lower-level test lane for session and API helper decisions | Open | Deterministic, SUT-independent tests cover cookie parsing, target-host safety, response classification, duplicate classification, and exact fixture identity; the lane runs before Docker E2E in CI. |
+| CODEX-07 | Medium | Make employee fixture setup fail precisely and verify exact identity | Open | Only an explicitly recognised absence permits create; only the documented duplicate response permits reuse; exact identity is read back; focused lower-level and local API contract tests pass. Depends on CODEX-06. |
+| CODEX-08 | Medium | Gate on installed OrangeHRM readiness rather than Apache reachability | Open | A bounded readiness check rejects the installer route and confirms the installed login/API surface; invalid `Conf.php` fails before Cucumber; clean-volume 7/7, report rendering, and CI pass. |
+| CODEX-09 | Medium | Pin MySQL and OrangeHRM images to reviewed immutable identities | Open | MySQL is exact-patch pinned and both images use reviewed digests with readable tags/comments; the documented update procedure proves restore, readiness, 7/7, report generation, and CI. Depends on CODEX-08. |
+| CODEX-10 | Low | Prevent persistent local runs from accumulating or misidentifying test records | Open | Scenario-owned employee/account identities are captured and safely deleted or asserted exactly; repeated persistent runs neither grow unmanaged data nor pass against an earlier record. Depends on CODEX-05 and CODEX-07. |
+| CODEX-11 | Low | Reconcile current guides and add low-cost contract checks | Open | Current guides agree on employee identity, authentication, smoke scope, readiness, image pins, and CI; automated checks cover scenario/smoke counts and declared CI commands. Runs after CODEX-01–10. |
+
+**Outstanding:** 10 — 2 High, 6 Medium, 2 Low. CODEX-01 is closed by the recorded decision;
+CODEX-02 is the next item and supplies its executable enforcement.
