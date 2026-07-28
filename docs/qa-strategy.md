@@ -15,22 +15,26 @@
 | Feature file | Scenarios | Scope | Tags | CI status |
 |---|---|---|---|---|
 | `pim-add-employee.feature` | 2 | Add an employee, with and without login credentials | `@changesState` | Active |
-| `pim-employee-management.feature` | 3 | Search (read-only), update nationality, delete | `@changesState` on update and delete | Active |
+| `pim-employee-management.feature` | 3 | Search (read-only UI query with API-seeded setup), update nationality, delete | `@changesState` on update and delete | Active |
 | `pim-validation.feature` | 2 | Missing last name; duplicate employee id | `@localOnly` on both; `@seedsData` also on the duplicate-id scenario | Active |
 
 **Active scenarios:** 7. **Deferred:** 0.
-**Smoke subset** (`smoke` profile, `not @deferred and not @changesState and not @localOnly and
-not @seedsData`): exactly 1 scenario — the read-only search scenario, the safe subset against
-the shared public demo.
+**Local smoke subset** (`smoke` profile, `not @deferred and not @changesState and not @localOnly
+and not @seedsData`): exactly 1 scenario — employee search. Its feature Background can
+conditionally create the employee through the API, so the profile is local-only despite the
+read-only UI query. A fail-fast hook rejects every non-loopback target before browser/API setup.
 
 ## 3. Automation gates
 
-1. **TypeScript type check:** `npx tsc --noEmit`, zero errors.
-2. **Active suite:** `npm test` (`--tags "not @deferred"`), all pass.
-3. **Living-documentation report:** `npm run test:report`, no generation errors.
+1. **Target contract:** `npm run test:target-contract`, every profile loads the pre-browser
+   loopback guard and representative remote/malformed targets are rejected.
+2. **TypeScript type check:** `npx tsc --noEmit`, zero errors.
+3. **Active suite:** `npm test` (`--tags "not @deferred"`), all pass.
+4. **Living-documentation report:** `npm run test:report`, no generation errors.
 
-The `e2e` workflow enforces these on every push to `main` and every pull request, against the
-local Dockerised OrangeHRM.
+The `e2e` workflow enforces the target contract, active suite, and report path on every push to
+`main` and every pull request against local Dockerised OrangeHRM. CODEX-04 tracks adding the
+documented TypeScript command to that workflow before browser and Docker setup.
 
 ## 4. Metrics and reporting
 
@@ -52,7 +56,7 @@ never fails a step.
 | Tier | Area | Risk | Mitigation |
 |---|---|---|---|
 | High | Vue SPA async render | Steps fire before the SPA re-renders, causing element-not-found or stale-element errors | Explicit `Wait.until(element, isVisible())` at every transition; zero hard waits |
-| High | Shared-demo non-determinism | The public demo is shared, periodically reset, and may reject writes | State-changing scenarios run against the local Docker target only |
+| High | Shared-demo mutation/non-determinism | The public demo is shared, and even the smoke Background can create a missing employee | Every profile is loopback-only; a pre-browser guard and static contract test reject remote targets |
 | Medium | Login session coupling | An expired or unshared session breaks both UI and API setup | Authenticate once per run; reset browser state per scenario |
 | Medium | Autocomplete debounce | Asserting before the debounced search renders gives a false negative | Wait on the result row before asserting |
 | Medium | Employee Id uniqueness | The duplicate-id case is meaningless if the seeded id did not take | Seed the exact id via API and verify before the UI step |
@@ -70,7 +74,9 @@ first render after the mutation.
 
 ```bash
 npm install
+npm run test:target-contract                 # no SUT; verifies every profile's loopback guard
 npm test                                   # full active suite
+npm run test:smoke:local                   # one-scenario local smoke selection
 HEADLESS=false npm test                    # visible browser
 npx cucumber-js --profile default features/pim-add-employee.feature
 npx tsc --noEmit
@@ -95,6 +101,6 @@ npm run test:report
 
 ## 7. Open improvements
 
-Tracked in `docs/backlog.md` — currently none open; all items #1–#6 are closed. The local image
-tag and seeded-database path the suite asserts against (backlog #1) was confirmed during the
-2026-06-23 build.
+Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01/02 are closed; CODEX-03–11 remain open.
+The local image tag and seeded-database path the suite asserts against (backlog #1) was confirmed
+during the 2026-06-23 build.

@@ -21,8 +21,8 @@ of band. It is a fair test of architecture, not just of clicking.
 - **Screenplay framework:** Serenity/JS
 - **UI driver:** Playwright
 - **BDD runner:** Cucumber
-- **SUT:** OrangeHRM Open Source (Starter), provisioned locally via Docker; the public
-  demo at `https://opensource-demo.orangehrmlive.com` serves as a read-only smoke target.
+- **SUT:** OrangeHRM Open Source (Starter), provisioned locally via Docker. Every executable
+  profile is loopback-only; the shared public demo is reference material, not a test target.
 - **Node.js:** 20 or newer (matches CI and `@types/node`).
 
 ## Run instructions
@@ -32,6 +32,12 @@ npm install
 
 # Run the full active suite (excludes quarantined scenarios)
 npm test
+
+# Run the narrower one-scenario smoke selection against the local target
+npm run test:smoke:local
+
+# Verify that every profile loads the loopback guard
+npm run test:target-contract
 
 # Visible browser, for debugging
 HEADLESS=false npm test
@@ -44,7 +50,10 @@ npm run test:report
 ```
 
 The suite resolves its target from `BASE_URL` (defaults to `http://localhost:8080`, the
-local Dockerised OrangeHRM). See `docs/architecture.md` for the full picture and
+local Dockerised OrangeHRM). A fail-fast hook rejects public, shared, malformed, and other
+non-loopback targets before launching Chromium or authenticating. The smoke profile remains
+local-only because its selected search scenario can create a missing employee in its Background.
+See `docs/architecture.md` for the full picture and
 `docs/implementation-plan.md` for the historical build order (the suite has been green since
 2026-06-23).
 

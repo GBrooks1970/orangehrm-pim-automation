@@ -32,8 +32,9 @@ Public-demo support can be restored only when all of these conditions are met:
 4. The README, architecture, QA strategy, feature manifest, Cucumber configuration, and backlog
    all describe the restored boundary consistently.
 
-CODEX-02 will add the fail-fast profile and host enforcement for this decision. Until that control
-is merged, contributors must not combine the public demo URL with any executable profile.
+The shared Cucumber hooks enforce this decision before Chromium launch or API authentication, and
+the SUT-independent target-contract check proves every profile loads that guard. Contributors must
+not combine the public demo URL with any executable profile.
 
 ## Trade-off
 

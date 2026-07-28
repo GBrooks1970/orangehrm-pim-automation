@@ -1,4 +1,5 @@
 import { BASE_URL, webUrl } from '../serenity.config';
+import { isLocalExecutionTarget } from '../config/target-safety';
 
 /**
  * Thin client over OrangeHRM's session-authenticated REST API v2, used to
@@ -41,15 +42,6 @@ interface Cookie { name: string; value: string }
 
 let session: Cookie | undefined;
 
-const targetIsLocalhost = (): boolean => {
-    try {
-        const host = new URL(BASE_URL).hostname.toLowerCase();
-        return host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '[::1]';
-    } catch {
-        return false;
-    }
-};
-
 /** Parse the cookies set across one or more `set-cookie` header lines. */
 const parseSetCookies = (header: string | null): Cookie[] => {
     if (!header) return [];
@@ -71,9 +63,9 @@ export const OrangeHrm = {
         if (session) return;
 
         const username = process.env.ORANGEHRM_ADMIN_USERNAME
-            ?? (targetIsLocalhost() ? 'Admin' : undefined);
+            ?? (isLocalExecutionTarget(BASE_URL) ? 'Admin' : undefined);
         const password = process.env.ORANGEHRM_ADMIN_PASSWORD
-            ?? (targetIsLocalhost() ? 'admin123' : undefined);
+            ?? (isLocalExecutionTarget(BASE_URL) ? 'admin123' : undefined);
         if (!username || !password) {
             throw new Error(
                 `Refusing to authenticate against a non-localhost target (${BASE_URL}) ` +
