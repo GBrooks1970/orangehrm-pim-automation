@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@cucumber/cucumber": "^12.9.0",
+    "@cucumber/cucumber": "^13.2.0",
     "@serenity-js/console-reporter": "3.44.1",
     "@serenity-js/core": "3.44.1",
     "@serenity-js/cucumber": "3.44.1",
