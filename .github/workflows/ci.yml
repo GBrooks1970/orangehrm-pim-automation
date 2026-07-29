@@ -34,6 +34,9 @@ jobs:
       - name: Type-check
         run: npm run typecheck
 
+      - name: Run lower-level tests
+        run: npm run test:unit
+
       - name: Audit high-severity dependencies
         run: npm audit --audit-level=high
 
