@@ -20,7 +20,8 @@ Given('an employee {string} exists', async (fullName: string) => {
     await OrangeHrm.ensureEmployeeExists(firstName, rest.join(' ') || firstName);
 });
 
-// The duplicate-id scenario needs a known Employee Id to already be in use.
+// The duplicate-id scenario needs a known Employee Id to already be in use by
+// this exact fixture; the API client verifies the persisted identity before return.
 Given('an employee with employee id {string} exists', async (employeeId: string) => {
     await OrangeHrm.ensureEmployeeWithId(employeeId, 'Existing', 'Employee');
 });

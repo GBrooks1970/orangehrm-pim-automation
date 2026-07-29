@@ -13,8 +13,10 @@ one rarely forces a change in another.
   `IssuedAccount`, `SearchForEmployee`, `EditPersonalDetails`, `DeleteEmployee`).
 - `questions/` — state reads (`EmployeeListRows`, `PersonalDetails`,
   `ValidationMessage`, `CurrentUser`).
-- `api/` — `OrangeHrmApiClient.ts`: session-cookie auth plus employee seed and verify
-  plus exact account association verification against REST API v2.
+- `api/` — `OrangeHrmApiClient.ts`: session-cookie auth plus a transport-injected employee
+  fixture client that fails precise lookup/validation errors and verifies exact persisted
+  identity, plus exact account association verification against REST API v2;
+  `OrangeHrmApiPolicy.ts`: pure cookie, auth, duplicate, and identity decisions.
 - `support/` — typed scenario-scoped notes for generated account and employee identity.
 - `actors/` — reserved; actor setup is handled via hooks.
 - `step-definitions/` — thin glue between Gherkin and Tasks, grouped by feature area.

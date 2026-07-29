@@ -14,7 +14,7 @@ Feature: PIM add-employee validation
 
   @localOnly @seedsData
   Scenario: Reject a duplicate employee id
-    Given an employee with employee id "0001" exists
-    When I try to add an employee named "Cole" "Frey" with employee id "0001"
+    Given an employee with employee id "C07DUP01" exists
+    When I try to add an employee named "Cole" "Frey" with employee id "C07DUP01"
     Then the add-employee form should reject the submission
     And I should see a message that the employee id is already in use

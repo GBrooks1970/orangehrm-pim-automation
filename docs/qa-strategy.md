@@ -34,12 +34,14 @@ read-only UI query. A fail-fast hook rejects every non-loopback target before br
 3. **Dependency audit:** `npm audit --audit-level=high`, no unaccepted High or Critical finding.
 4. **Target contract:** `npm run test:target-contract`, every profile loads the pre-browser
    loopback guard and representative remote/malformed targets are rejected.
-5. **Active suite:** `npm test` (`--tags "not @deferred"`), all pass.
-6. **Living-documentation report:** `npm run test:report`, no generation errors.
+5. **Local employee API contract:** `npm run test:api-contract`, against the running Docker target;
+   creates or reuses one stable fixture and proves its exact Employee Id/name/`empNumber` read-back.
+6. **Active suite:** `npm test` (`--tags "not @deferred"`), all pass.
+7. **Living-documentation report:** `npm run test:report`, no generation errors.
 
 The `e2e` workflow enforces the TypeScript, lower-level, High-severity audit, target-contract,
-active-suite, and report gates on every push to `main` and every pull request against local
-Dockerised OrangeHRM.
+local API contract, active-suite, and report gates on every push to `main` and every pull request
+against local Dockerised OrangeHRM.
 The cheap TypeScript and lower-level gates run immediately after `npm ci`, before browser or
 Docker setup.
 
@@ -68,6 +70,7 @@ never fails a step.
 | Medium | Issued-account false positive | Employee creation succeeds but the requested login account is absent, disabled, linked to another employee, or unusable | Retain the generated username in scenario notes, verify the exact enabled association through the admin API, then clear the admin session and sign in as the employee; mask the password in all activities |
 | Medium | Autocomplete debounce | Asserting before the debounced search renders gives a false negative | Wait on the result row before asserting |
 | Medium | Employee Id uniqueness | The duplicate-id case is meaningless if the seeded id did not take | Seed the exact id via API and verify before the UI step |
+| Medium | Fixture API ambiguity | Lookup/auth failures or unrelated validation errors can masquerade as an absent/duplicate fixture | Fail non-OK lookup immediately; accept only the parsed 5.8.1 duplicate signature; read back exact identity |
 | Low | Record vs toast | Asserting on the fading success toast races the UI | Assert on the persisted record and list row |
 
 ### Settled-state assertions
@@ -84,6 +87,7 @@ first render after the mutation.
 npm install
 npm run test:unit                           # fast; no SUT or browser required
 npm run test:target-contract                 # no SUT; verifies every profile's loopback guard
+BASE_URL=http://localhost:8080 npm run test:api-contract  # requires the local stack
 npm test                                   # full active suite
 npm run test:smoke:local                   # one-scenario local smoke selection
 HEADLESS=false npm test                    # visible browser
@@ -110,6 +114,6 @@ npm run test:report
 
 ## 7. Open improvements
 
-Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01–06 are closed; CODEX-07–11 remain open.
+Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01–07 are closed; CODEX-08–11 remain open.
 The local image tag and seeded-database path the suite asserts against (backlog #1) was confirmed
 during the 2026-06-23 build.

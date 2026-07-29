@@ -62,6 +62,11 @@ jobs:
           curl -sf http://localhost:8080/web/index.php/auth/login -o /dev/null
           curl -sf http://localhost:8080/web/index.php/pim/viewEmployeeList -o /dev/null || true
 
+      - name: Verify employee fixture API contract
+        env:
+          BASE_URL: http://localhost:8080
+        run: npm run test:api-contract
+
       # Run the active suite (excludes @deferred) against the local target. CI
       # default for screenshots is `failures` (see src/config/screenshots.ts).
       - name: Run suite

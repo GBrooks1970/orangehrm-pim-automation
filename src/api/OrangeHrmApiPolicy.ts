@@ -19,12 +19,33 @@ export interface RequestedEmployeeIdentity {
     employeeId?: string | null;
 }
 
+/** Reject wire-format drift before identity comparison obscures the API failure. */
+export const isEmployeeRecordIdentity = (value: unknown): value is EmployeeRecordIdentity => {
+    if (typeof value !== 'object' || value === null) return false;
+
+    const candidate = value as Partial<EmployeeRecordIdentity>;
+    return typeof candidate.empNumber === 'number' &&
+        (typeof candidate.employeeId === 'string' || candidate.employeeId === null) &&
+        typeof candidate.firstName === 'string' &&
+        typeof candidate.lastName === 'string';
+};
+
 export type EmployeeLookupDecision =
     | { kind: 'found'; employee: EmployeeRecordIdentity }
     | { kind: 'absent' }
     | { kind: 'error'; status: number };
 
 export type EmployeeIdCreateFailure = 'duplicate' | 'error';
+
+interface OrangeHrmValidationError {
+    error?: {
+        status?: string;
+        message?: string;
+        data?: {
+            invalidParamKeys?: unknown;
+        };
+    };
+}
 
 /**
  * Parse cookies from Node fetch's combined `set-cookie` header while preserving
@@ -73,11 +94,34 @@ export const classifyEmployeeLookup = (
         : { kind: 'absent' };
 };
 
-/** Capture the client's current duplicate-id decision as a testable policy seam. */
+/** A rejected login redirects back to the login route rather than the dashboard. */
+export const isAuthenticationRejected = (location: string): boolean =>
+    /(?:^|\/)auth\/login(?:[/?#]|$)/i.test(location);
+
+/**
+ * OrangeHRM 5.8.1 reports a duplicate Employee Id as a 422 validation error
+ * whose sole invalid parameter is `employeeId`. Status alone is insufficient:
+ * missing names and other validation failures also use HTTP 422.
+ */
 export const classifyEmployeeIdCreateFailure = (
     status: number,
     detail: string,
-): EmployeeIdCreateFailure =>
-    status === 422 || /unique|already|exist/i.test(detail)
-        ? 'duplicate'
-        : 'error';
+): EmployeeIdCreateFailure => {
+    if (status !== 422) return 'error';
+
+    try {
+        const payload = JSON.parse(detail) as OrangeHrmValidationError;
+        const error = payload.error;
+        const invalidParamKeys = error?.data?.invalidParamKeys;
+
+        return error?.status === '422' &&
+            error.message === 'Invalid Parameter' &&
+            Array.isArray(invalidParamKeys) &&
+            invalidParamKeys.length === 1 &&
+            invalidParamKeys[0] === 'employeeId'
+            ? 'duplicate'
+            : 'error';
+    } catch {
+        return 'error';
+    }
+};

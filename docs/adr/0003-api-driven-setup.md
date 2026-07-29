@@ -15,8 +15,10 @@ Seed prerequisite employees through OrangeHRM REST API v2, via a dedicated modul
 (`src/api/OrangeHrmApiClient.ts`), deliberately outside the Screenplay actor model — not behind
 a `CallAnApi` ability. The client authenticates once per run with the admin session cookie (the
 Open Source edition has no static bearer token) and POSTs employees for the Background
-`an employee exists` step. The behaviours under test (add, search, edit, delete) still drive
-the UI. Setup deliberately sits outside the acting model: the same session-authenticated client
+`an employee exists` step. A lookup error fails immediately; successful creates and recognised
+duplicate-Employee-Id responses are read back and must match the exact requested record before
+setup returns. The behaviours under test (add, search, edit, delete) still drive the UI. Setup
+deliberately sits outside the acting model: the same session-authenticated client
 also has to seed once in `BeforeAll` before any actor exists, and reusing a plain client for
 both keeps that single authentication call in one place rather than threading an ability
 through a hook that runs before Cucumber's actor lifecycle begins.
@@ -36,5 +38,7 @@ login page, POSTs it with the credentials to `auth/validate`, and keeps the resu
 `_orangehrm` session cookie. That cookie both authorises the seed calls
 (`ensureEmployeeExists` POSTing to `api/v2/pim/employees`, backing the `an employee "X" exists`
 Background step) and is injected into the browser by `LogInAsAdmin`, so scenarios start
-authenticated without re-driving the login form. The add, search, edit and delete behaviours
-still exercise the UI.
+authenticated without re-driving the login form. `EmployeeFixtureClient` treats only a successful
+empty lookup as absence, recognises the documented 5.8.1 duplicate validation shape, and verifies
+the exact Employee Id/name/`empNumber` through a GET before returning. The add, search, edit and
+delete behaviours still exercise the UI.
