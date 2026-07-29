@@ -10,6 +10,20 @@ updates:
         patterns:
           - "@serenity-js/*"
           - playwright
+    ignore:
+      # ts-node 10.9.2 crashes while loading this CommonJS project with TypeScript 7.
+      - dependency-name: typescript
+        versions:
+          - ">=7.0.0"
+      # Keep runtime declarations aligned with the repository's Node 24 contract.
+      - dependency-name: "@types/node"
+        versions:
+          - ">=25.0.0"
+      # Serenity/JS 3.44.1 consumes playwright-core ~1.61.1; newer minors create
+      # two incompatible Browser type identities until the framework set moves.
+      - dependency-name: playwright
+        versions:
+          - ">=1.62.0"
 
   - package-ecosystem: github-actions
     directory: /
