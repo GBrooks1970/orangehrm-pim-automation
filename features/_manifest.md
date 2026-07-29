@@ -7,7 +7,7 @@ through the REST API ability in the Background; the behaviour under test drives 
 
 | Feature file | Scenarios | Scope | Tags |
 |---|---|---|---|
-| `pim-add-employee.feature` | 2 | Happy path: add an employee, with and without login credentials; confirm in the list | `@changesState` on both (they create records) |
+| `pim-add-employee.feature` | 2 | Happy path: add an employee and confirm in the list; the credentials variant also verifies the enabled username/employee association and a real employee login | `@changesState` on both (they create records) |
 | `pim-employee-management.feature` | 3 | Find by name (read-only), update nationality, delete | `@changesState` on update and delete |
 | `pim-validation.feature` | 2 | Reject a missing last name; reject a duplicate employee id | `@localOnly` on both; `@seedsData` also on the duplicate-id scenario (its Background writes via the API) |
 

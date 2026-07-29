@@ -14,7 +14,7 @@
 
 | Feature file | Scenarios | Scope | Tags | CI status |
 |---|---|---|---|---|
-| `pim-add-employee.feature` | 2 | Add an employee, with and without login credentials | `@changesState` | Active |
+| `pim-add-employee.feature` | 2 | Add an employee; the credentials variant verifies the enabled account association and signs in as that employee | `@changesState` | Active |
 | `pim-employee-management.feature` | 3 | Search (read-only UI query with API-seeded setup), update nationality, delete | `@changesState` on update and delete | Active |
 | `pim-validation.feature` | 2 | Missing last name; duplicate employee id | `@localOnly` on both; `@seedsData` also on the duplicate-id scenario | Active |
 
@@ -60,6 +60,7 @@ never fails a step.
 | High | Vue SPA async render | Steps fire before the SPA re-renders, causing element-not-found or stale-element errors | Explicit `Wait.until(element, isVisible())` at every transition; zero hard waits |
 | High | Shared-demo mutation/non-determinism | The public demo is shared, and even the smoke Background can create a missing employee | Every profile is loopback-only; a pre-browser guard and static contract test reject remote targets |
 | Medium | Login session coupling | An expired or unshared session breaks both UI and API setup | Authenticate once per run; reset browser state per scenario |
+| Medium | Issued-account false positive | Employee creation succeeds but the requested login account is absent, disabled, linked to another employee, or unusable | Retain the generated username in scenario notes, verify the exact enabled association through the admin API, then clear the admin session and sign in as the employee; mask the password in all activities |
 | Medium | Autocomplete debounce | Asserting before the debounced search renders gives a false negative | Wait on the result row before asserting |
 | Medium | Employee Id uniqueness | The duplicate-id case is meaningless if the seeded id did not take | Seed the exact id via API and verify before the UI step |
 | Low | Record vs toast | Asserting on the fading success toast races the UI | Assert on the persisted record and list row |
@@ -103,6 +104,6 @@ npm run test:report
 
 ## 7. Open improvements
 
-Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01/02 are closed; CODEX-03–11 remain open.
+Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01–05 are closed; CODEX-06–11 remain open.
 The local image tag and seeded-database path the suite asserts against (backlog #1) was confirmed
 during the 2026-06-23 build.

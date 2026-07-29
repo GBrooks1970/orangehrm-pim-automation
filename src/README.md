@@ -5,15 +5,17 @@ one rarely forces a change in another.
 
 - `serenity.config.ts` — reporter crew only; no test logic.
 - `hooks/` — browser launched once per run (`BeforeAll`); per-scenario state reset and
-  actor engagement (`Before`); browser closed once (`AfterAll`).
+  actor engagement with browsing plus a fresh notepad (`Before`); browser closed once
+  (`AfterAll`).
 - `interactions/` — `PageElement` definitions per PIM page area (login, add-employee
   form, employee list, personal-details).
 - `tasks/` — composed, intent-named activities (`LogInAsAdmin`, `AddEmployee`,
-  `SearchForEmployee`, `EditPersonalDetails`, `DeleteEmployee`).
+  `IssuedAccount`, `SearchForEmployee`, `EditPersonalDetails`, `DeleteEmployee`).
 - `questions/` — state reads (`EmployeeListRows`, `PersonalDetails`,
-  `ValidationMessage`).
+  `ValidationMessage`, `CurrentUser`).
 - `api/` — `OrangeHrmApiClient.ts`: session-cookie auth plus employee seed and verify
-  against REST API v2.
+  plus exact account association verification against REST API v2.
+- `support/` — typed scenario-scoped notes for generated account and employee identity.
 - `actors/` — reserved; actor setup is handled via hooks.
 - `step-definitions/` — thin glue between Gherkin and Tasks, grouped by feature area.
 

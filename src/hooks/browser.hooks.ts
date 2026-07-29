@@ -1,11 +1,12 @@
 import { BeforeAll, Before, AfterAll, setDefaultTimeout } from '@cucumber/cucumber';
-import { Cast, engage } from '@serenity-js/core';
+import { Cast, engage, TakeNotes } from '@serenity-js/core';
 import { BrowseTheWebWithPlaywright } from '@serenity-js/playwright';
 import { chromium } from 'playwright';
 import type { Browser } from 'playwright';
 import { OrangeHrm } from '../api/OrangeHrmApiClient';
 import { assertLocalExecutionTarget } from '../config/target-safety';
 import { BASE_URL } from '../serenity.config';
+import { ScenarioNotes } from '../support/ScenarioNotes';
 
 // Cucumber's default per-step timeout is 5 s. An OrangeHRM PIM step combines
 // network latency with several Vue re-renders against a cold SPA, which can
@@ -70,6 +71,7 @@ Before(async () => {
     engage(Cast.where(actor =>
         actor.whoCan(
             BrowseTheWebWithPlaywright.using(browser),
+            TakeNotes.usingAnEmptyNotepad<ScenarioNotes>(),
         )
     ));
 });
