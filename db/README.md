@@ -4,6 +4,10 @@ The suite asserts against a controllable local OrangeHRM (ADR-0002,
 `docs/docker-image-decision.md`). Provisioning is two-phase: **seed once** (Phase A,
 one-off), then **restore many** (Phase B, every run).
 
+Compose uses the reviewed Linux/amd64 manifests for MySQL 8.0.46 and OrangeHRM 5.8.1.
+Do not update only a readable tag or only a digest: follow the paired review and clean-volume
+compatibility procedure in `docs/docker-image-decision.md`.
+
 ## Artifacts in version control
 
 | File | Role |

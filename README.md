@@ -21,8 +21,9 @@ of band. It is a fair test of architecture, not just of clicking.
 - **Screenplay framework:** Serenity/JS
 - **UI driver:** Playwright
 - **BDD runner:** Cucumber
-- **SUT:** OrangeHRM Open Source (Starter), provisioned locally via Docker. Every executable
-  profile is loopback-only; the shared public demo is reference material, not a test target.
+- **SUT:** OrangeHRM Open Source 5.8.1 with MySQL 8.0.46, provisioned locally from reviewed,
+  immutable Linux/amd64 image manifests. Every executable profile is loopback-only; the shared
+  public demo is reference material, not a test target.
 - **Node.js:** 24.x (matches Serenity/JS, CI, `.nvmrc`, and `@types/node`).
 
 ## Run instructions
@@ -77,7 +78,8 @@ docker compose down -v && docker compose up -d --wait   # wipes both volumes, re
 BASE_URL=http://localhost:8080 npm run test:readiness   # proves installed app, not just Apache
 ```
 
-See `db/README.md` for the full provisioning detail and
+See `db/README.md` for the full provisioning detail,
+`docs/docker-image-decision.md` for image provenance/update evidence, and
 `docs/dependency-policy.md` for dependency/audit handling.
 
 ## Status

@@ -15,7 +15,11 @@
 
 services:
   db:
-    image: mysql:8.0
+    # Reviewed 2026-07-29 for GitHub's Linux/amd64 runner. Keep the readable
+    # exact-patch tag and immutable architecture manifest together; see
+    # docs/docker-image-decision.md for provenance and the update procedure.
+    image: mysql:8.0.46@sha256:62fb722c78b24245ddff1796a0fcee4a49cc5b87e0aaaf20c92d1da9e0a2497b
+    platform: linux/amd64
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpass}
       MYSQL_DATABASE: orangehrm
@@ -36,10 +40,11 @@ services:
       - ./db/seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
 
   web:
-    # Pinned to the current stable OSS release. As of 2026-04-06 this digest is the
-    # same image as :latest; pinning the exact patch keeps runs deterministic when
-    # :latest later moves. See docs/docker-image-decision.md.
-    image: orangehrm/orangehrm:5.8.1
+    # Reviewed 2026-07-29 for GitHub's Linux/amd64 runner. This deliberate 5.8.1
+    # compatibility baseline is pinned to its immutable architecture manifest;
+    # see docs/docker-image-decision.md before updating either tag or digest.
+    image: orangehrm/orangehrm:5.8.1@sha256:5eb278acc6280c9a3144b2868230abe48b5bc5892fe00d07c7ec3028e86638e7
+    platform: linux/amd64
     depends_on:
       db:
         condition: service_healthy
