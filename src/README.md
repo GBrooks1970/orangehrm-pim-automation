@@ -4,6 +4,7 @@ Each folder is one Screenplay responsibility. Keeping them separate means a chan
 one rarely forces a change in another.
 
 - `serenity.config.ts` — reporter crew only; no test logic.
+- `config/readiness.ts` — bounded retry/deadline policy used by the pre-test installed-app gate.
 - `hooks/` — browser launched once per run (`BeforeAll`); per-scenario state reset and
   actor engagement with browsing plus a fresh notepad (`Before`); browser closed once
   (`AfterAll`).

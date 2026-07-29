@@ -98,6 +98,10 @@ export const classifyEmployeeLookup = (
 export const isAuthenticationRejected = (location: string): boolean =>
     /(?:^|\/)auth\/login(?:[/?#]|$)/i.test(location);
 
+/** Detect the uninstalled application route before setup reaches Cucumber. */
+export const isInstallerRoute = (location: string): boolean =>
+    /(?:^|\/)installer(?:[/?#]|$)/i.test(location);
+
 /**
  * OrangeHRM 5.8.1 reports a duplicate Employee Id as a 422 validation error
  * whose sole invalid parameter is `employeeId`. Status alone is insufficient:

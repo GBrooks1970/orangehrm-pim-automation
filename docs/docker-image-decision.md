@@ -118,12 +118,20 @@ volume and would otherwise re-run the installer despite a populated database).
 
 ### Phase B — run many (every run, automated)
 
-1. `docker compose up`: MySQL starts and restores `seed.sql`, so it comes up already populated.
-2. The app boots already installed, with `Admin / admin123` available. Warm up the cold pages.
-3. The suite authenticates, seeds its per-test employees through REST API v2, and drives PIM
+1. `docker compose up --wait`: MySQL starts and restores `seed.sql`; Compose proves database and
+   Apache transport health, not application installation.
+2. `npm run test:readiness` polls to a strict deadline, rejects any installer redirect, completes
+   the `Admin / admin123` login exchange, and requires a valid authenticated PIM API response.
+3. Only after readiness passes, warm the cold pages. The suite then authenticates, seeds its
+   per-test employees through REST API v2, and drives PIM
    through the UI.
 4. Tear down: discard the database so the next run restores the same `seed.sql` and starts from
    the same known state.
+
+For a negative proof, set `ORANGEHRM_CONF_PATH=./tests/fixtures/invalid-Conf.php`, recreate the
+web service, and run the readiness command with a short timeout. Apache still becomes healthy,
+but readiness fails on the login surface before warm-up or Cucumber. Restore the default mount
+and recreate `web` afterwards.
 
 The MySQL service restores `seed.sql` by mounting it into `/docker-entrypoint-initdb.d/`, which
 the official MySQL image runs on first start of an empty data directory. Keep the database on an

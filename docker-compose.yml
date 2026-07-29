@@ -53,11 +53,12 @@ services:
     # installer despite a populated database. See db/README.md.
     volumes:
       - app-data:/var/www/html       # the image declares VOLUME /var/www/html
-      - ./provisioning/Conf.php:/var/www/html/lib/confs/Conf.php:ro
+      - ${ORANGEHRM_CONF_PATH:-./provisioning/Conf.php}:/var/www/html/lib/confs/Conf.php:ro
     healthcheck:
-      # Confirms the web server is up. It does not confirm the app is installed: before
-      # install, requests redirect to the installer. Treat "installed" as a separate gate.
-      test: ["CMD", "curl", "-sf", "-o", "/dev/null", "http://localhost:80/"]
+      # Transport-only precursor: prove Apache answers, even with a 4xx/5xx response.
+      # The bounded Node readiness gate separately rejects the installer and proves
+      # authenticated PIM API access before warm-up or Cucumber begins.
+      test: ["CMD", "curl", "-sS", "-o", "/dev/null", "http://localhost:80/"]
       interval: 15s
       timeout: 5s
       retries: 20

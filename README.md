@@ -39,6 +39,9 @@ npm run test:unit
 # With the local stack running, verify employee create/reuse/read-back semantics
 BASE_URL=http://localhost:8080 npm run test:api-contract
 
+# Prove the installed login and authenticated PIM API are ready
+BASE_URL=http://localhost:8080 npm run test:readiness
+
 # Run the narrower one-scenario smoke selection against the local target
 npm run test:smoke:local
 
@@ -70,7 +73,8 @@ See `docs/architecture.md` for the full picture and
 (created/edited/deleted employees). Reset to the seeded baseline with:
 
 ```bash
-docker compose down -v && docker compose up -d   # wipes both volumes, restores seed
+docker compose down -v && docker compose up -d --wait   # wipes both volumes, restores seed
+BASE_URL=http://localhost:8080 npm run test:readiness   # proves installed app, not just Apache
 ```
 
 See `db/README.md` for the full provisioning detail and
@@ -82,9 +86,9 @@ Implemented and green. All 7 active scenarios pass against the local Dockerised 
 (`npm test` → 7/7, deterministic across re-runs), covering add-employee (with and without
 login details), search, update nationality, delete, and the missing-last-name and duplicate-id
 validations. Provisioning is automated (`docker compose up` restores the seeded target and
-boots installed); CI runs the fast lower-level lane before browser/Docker setup, verifies the
-employee fixture API contract after startup, then runs the suite and publishes the Serenity
-living documentation. See
+boots installed); CI runs the fast lower-level lane before browser/Docker setup, then requires
+the bounded installed-login/authenticated-API readiness gate before warm-up, the employee fixture
+contract, or Cucumber. It then publishes the Serenity living documentation. See
 `docs/implementation-plan.md` and `db/README.md`.
 
 ## Licence
