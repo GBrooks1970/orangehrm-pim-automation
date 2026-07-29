@@ -1,11 +1,14 @@
 import { When, Then } from '@cucumber/cucumber';
-import { actorCalled, Duration, Wait } from '@serenity-js/core';
+import { actorCalled, Duration, notes, Wait } from '@serenity-js/core';
 import { Ensure, equals, isPresent } from '@serenity-js/assertions';
 import { AddEmployee } from '../tasks/AddEmployee';
 import { SearchForEmployee } from '../tasks/SearchForEmployee';
 import { OpenEmployeeRecord } from '../tasks/OpenEmployeeRecord';
 import { EmployeeListRows } from '../questions/EmployeeListRows';
 import { PersonalDetails } from '../questions/PersonalDetails';
+import { CurrentUser } from '../questions/CurrentUser';
+import { IssuedAccount } from '../tasks/IssuedAccount';
+import { ScenarioNotes } from '../support/ScenarioNotes';
 
 const SETTLE = Duration.ofSeconds(15);
 
@@ -36,5 +39,21 @@ Then('the employee record should show the name {string}', async (name: string) =
     await actorCalled('User').attemptsTo(
         OpenEmployeeRecord.named(name),
         Ensure.that(PersonalDetails.name(), equals(name)),
+    );
+});
+
+Then('the issued account should be enabled for that employee', async () => {
+    await actorCalled('User').attemptsTo(
+        IssuedAccount.isEnabledForItsEmployee(),
+    );
+});
+
+Then('the employee should be able to sign in with the issued account', async () => {
+    await actorCalled('User').attemptsTo(
+        IssuedAccount.signIn(),
+        Ensure.that(
+            CurrentUser.name(),
+            equals(notes<ScenarioNotes>().get('issuedEmployeeName')),
+        ),
     );
 });

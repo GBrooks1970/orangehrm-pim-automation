@@ -16,3 +16,5 @@ Feature: Add an employee to PIM
   Scenario: Add a new employee with login credentials
     When I add an employee named "Marcus" "Hale" with login details
     Then the employee "Marcus Hale" should appear in the employee list
+    And the issued account should be enabled for that employee
+    And the employee should be able to sign in with the issued account

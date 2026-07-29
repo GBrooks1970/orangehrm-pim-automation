@@ -27,6 +27,7 @@ Before(async () => {
     engage(Cast.where(actor =>
         actor.whoCan(
             BrowseTheWebWithPlaywright.using(browser),
+            TakeNotes.usingAnEmptyNotepad<ScenarioNotes>(),
         )
     ));
 });
@@ -46,8 +47,10 @@ closed-browser error. Launch once, close once.
 | Ability | Package | Role |
 |---|---|---|
 | `BrowseTheWebWithPlaywright` | `@serenity-js/playwright` | Drive the PIM UI |
+| `TakeNotes` | `@serenity-js/core` | Retain generated account and employee identity within one scenario |
 
-The actor is only ever given the browsing ability. API setup (authentication and seeding) runs
+The actor is given browsing and a fresh typed notepad for each scenario. API setup
+(authentication and seeding) runs
 through a dedicated module-level client (`src/api/OrangeHrmApiClient.ts`), deliberately outside
 the Screenplay actor model — see [ADR-0003](adr/0003-api-driven-setup.md) for the rationale.
 OrangeHRM's REST API v2 authenticates with the logged-in session cookie (and a CSRF token
@@ -66,7 +69,9 @@ here, out of the feature files, means an OrangeHRM restyle changes one Interacti
 | Task | Description |
 |---|---|
 | `LogInAsAdmin.now()` | UI login, used where login itself matters; most scenarios get the session via the API ability |
-| `AddEmployee.named(first, last)` | Open Add Employee, fill the name, save; optionally toggle login details |
+| `AddEmployee.named(first, last)` | Open Add Employee, fill the name, and save |
+| `AddEmployee.withLoginDetails(first, last)` | Create the employee and a uniquely named enabled account; retain the issued identity in scenario notes and mask its password |
+| `IssuedAccount.isEnabledForItsEmployee()` / `.signIn()` | Verify the exact enabled username/employee association via the admin API, then clear the admin session and perform a real employee login |
 | `SearchForEmployee.selecting(name)` | Enter the employee-list filter, wait for and select the matching autocomplete suggestion, then search |
 | `SearchForEmployee.byNameText(name)` | Enter the filter, wait for the autocomplete to settle (no match), search on the typed text — for confirming an absence |
 | `EditPersonalDetails.setNationality(value)` | Open the record, set nationality, save |
@@ -78,6 +83,7 @@ here, out of the feature files, means an OrangeHRM restyle changes one Interacti
 | `PersonalDetails.name()` | The name on the record | `equals("Aurora Vega")` |
 | `PersonalDetails.nationality()` | The selected nationality | `equals("British")` |
 | `ValidationMessage.forField(field)` | The field's error text | `includes("Required")` |
+| `CurrentUser.name()` | The signed-in employee's top-bar name | `equals(notes().get("issuedEmployeeName"))` |
 
 Assert on the persisted record and the list row, never on the post-save success toast, which
 fades on a timer and races the assertion.

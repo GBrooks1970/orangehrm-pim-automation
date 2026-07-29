@@ -40,6 +40,17 @@ export interface SeededEmployee {
 
 interface Cookie { name: string; value: string }
 
+interface SystemUser {
+    userName: string;
+    deleted: boolean;
+    status: boolean;
+    employee: {
+        empNumber: number;
+        firstName: string;
+        lastName: string;
+    };
+}
+
 let session: Cookie | undefined;
 
 /** Parse the cookies set across one or more `set-cookie` header lines. */
@@ -157,6 +168,43 @@ export const OrangeHrm = {
         }
         const { data } = (await response.json()) as { data: SeededEmployee };
         return data;
+    },
+
+    /**
+     * Verify that OrangeHRM persisted an enabled login account and associated it
+     * with the employee created by the UI journey.
+     */
+    verifyEnabledUserForEmployee: async (
+        username: string,
+        firstName: string,
+        lastName: string,
+    ): Promise<void> => {
+        const cookie = OrangeHrm.sessionCookie();
+        const query = new URLSearchParams({ username, limit: '50' });
+        const response = await fetch(webUrl(`api/v2/admin/users?${query.toString()}`), {
+            headers: { Cookie: `${cookie.name}=${cookie.value}` },
+        });
+        if (!response.ok) {
+            throw new Error(
+                `Could not verify issued account "${username}" through the admin API ` +
+                `(HTTP ${response.status}): ${await response.text()}`,
+            );
+        }
+
+        const { data } = (await response.json()) as { data: SystemUser[] };
+        const user = data.find(candidate => candidate.userName.toLowerCase() === username.toLowerCase());
+        if (!user) {
+            throw new Error(`Issued account "${username}" was not created.`);
+        }
+        if (user.deleted || !user.status) {
+            throw new Error(`Issued account "${username}" exists but is not enabled.`);
+        }
+        if (user.employee.firstName !== firstName || user.employee.lastName !== lastName) {
+            throw new Error(
+                `Issued account "${username}" is linked to ` +
+                `"${user.employee.firstName} ${user.employee.lastName}", expected "${firstName} ${lastName}".`,
+            );
+        }
     },
 
     /**
