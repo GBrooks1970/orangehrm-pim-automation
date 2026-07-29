@@ -87,7 +87,7 @@ jobs:
       # obscures the real failure.
       - name: Upload Pages artifact
         if: always() && steps.render.outcome == 'success'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: target/site/serenity
 
