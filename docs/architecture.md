@@ -57,6 +57,7 @@ Organised by Screenplay layer, one folder each:
 |---|---|
 | `npm test` | Run the active suite (excludes `@deferred`) |
 | `npm run test:unit` | Run the fast SUT-independent API-policy and target-safety tests |
+| `npm run test:readiness` | Bounded proof of installed login plus authenticated PIM API readiness |
 | `npm run test:api-contract` | Against local Docker, prove exact employee create/reuse/read-back semantics |
 | `npm run test:smoke:local` | Run the one-scenario local smoke selection |
 | `npm run test:target-contract` | Prove every profile loads the pre-browser loopback guard |
@@ -77,7 +78,8 @@ orangehrm-pim-automation/
 ├── src/
 │   ├── serenity.config.ts             # Reporter crew (no test logic)
 │   ├── config/
-│   │   └── target-safety.ts            # Pure loopback classification + fail-fast guard
+│   │   ├── target-safety.ts            # Pure loopback classification + fail-fast guard
+│   │   └── readiness.ts                # Bounded state-poll policy with deterministic tests
 │   ├── hooks/
 │   │   └── browser.hooks.ts           # Browser once (BeforeAll); state reset + engage (Before)
 │   ├── interactions/                  # PageElements: login, top bar, add form, employee list, personal details
@@ -103,7 +105,8 @@ orangehrm-pim-automation/
 ├── .github/workflows/
 │   └── ci.yml                         # Start stack → warm-up → suite → publish report
 ├── scripts/
-│   └── verify-local-target-contract.ts# Static profile/guard contract check
+│   ├── verify-local-target-contract.ts # Static profile/guard contract check
+│   └── verify-orangehrm-readiness.ts   # Installed login + authenticated API probe
 ├── tests/
 │   ├── unit/                           # Node test runner; deterministic and SUT-independent
 │   └── contract/                       # Thin employee API check against local Docker
@@ -127,20 +130,22 @@ What happens when `npm test` runs:
 4. `src/hooks/browser.hooks.ts` registers `BeforeAll`, `Before`, `AfterAll`.
 5. Once per run: `BeforeAll` rejects a non-loopback `BASE_URL` before it launches Chromium or
    authenticates the API client, then holds the local admin session cookie for seeding.
-6. In CI, `test:api-contract` proves the authenticated employee fixture boundary against the
+6. After Compose transport health, `test:readiness` rejects the installer/broken configuration
+   and proves the installed login plus authenticated PIM API within a strict deadline.
+7. In CI, `test:api-contract` proves the authenticated employee fixture boundary against the
    running local API before Cucumber begins.
-7. Per scenario: `Before` resets browser state and engages the actor with
+8. Per scenario: `Before` resets browser state and engages the actor with
    `BrowseTheWebWithPlaywright` plus an empty `TakeNotes` notepad. API setup
    (authentication, seeding) runs through a dedicated module-level client, deliberately
    outside the actor model (ADR-0003).
-8. Cucumber matches steps to `src/step-definitions/`.
-9. Step definitions call `actorCalled('User').attemptsTo(Task...)` or
+9. Cucumber matches steps to `src/step-definitions/`.
+10. Step definitions call `actorCalled('User').attemptsTo(Task...)` or
    `Ensure.that(Question, matcher)`.
-10. Tasks decompose to Interactions against Playwright.
-11. `Wait.upTo(...).until(element, isVisible())` guards every async Vue transition; the
+11. Tasks decompose to Interactions against Playwright.
+12. `Wait.upTo(...).until(element, isVisible())` guards every async Vue transition; the
     default ceiling is too short for a cold SPA, so it is set explicitly.
-12. Once per run: `AfterAll` closes the browser.
-13. The ArtifactArchiver writes Serenity JSON to `docs/reports/`; `npm run test:report`
+13. Once per run: `AfterAll` closes the browser.
+14. The ArtifactArchiver writes Serenity JSON to `docs/reports/`; `npm run test:report`
     renders the HTML living documentation, published by CI.
 
 ## 5. SUT-specific constraints
@@ -149,6 +154,7 @@ What happens when `npm test` runs:
 |---|---|---|---|
 | Vue SPA async render | Wait on element state at every step and route transition; no hard waits | The PIM screens re-render asynchronously from REST API v2 calls | ADR-0001, screenplay-guide |
 | Login gate | Every scenario starts authenticated | PIM is behind login; the session cookie also authorises the API client | `LogInAsAdmin` / API auth in `BeforeAll` |
+| Installed readiness | Treat Compose web health as transport-only; poll installed login and authenticated PIM API to a fixed deadline before warm-up/tests | Apache can answer while the installer or a broken `Conf.php` is being served | `readiness.ts`, `verify-orangehrm-readiness.ts`, CI ordering |
 | Issued employee account | Retain the unique username and employee identity per scenario; mask the password; verify the exact enabled admin-API association, then perform a fresh employee login | Creating the employee record alone does not prove that OrangeHRM created a usable account | `ScenarioNotes`, `IssuedAccount`, `CurrentUser` |
 | Employee Id auto-fill | Read or override the auto-filled Employee Id deliberately | The form pre-fills the next Id; assertions and the duplicate-id case depend on a known value | `AddEmployee` task |
 | Autocomplete search | Wait for the result option to render before selecting | The employee-name search is a debounced async autocomplete | Task-level wait |
@@ -164,6 +170,6 @@ row), never the transient success toast that flashes after save.
 ## 6. Known issues and technical debt
 
 The suite has been built to green since 2026-06-23. Open items are tracked in
-`docs/backlog.md` (Items #1–#6 and CODEX-01–07 are closed; CODEX-08–11 remain open); the historical build order is
+`docs/backlog.md` (Items #1–#6 and CODEX-01–08 are closed; CODEX-09–11 remain open); the historical build order is
 recorded in `docs/implementation-plan.md`. The local image tag and seeded-database path
 (backlog #1) that the whole suite asserts against was confirmed during that build.

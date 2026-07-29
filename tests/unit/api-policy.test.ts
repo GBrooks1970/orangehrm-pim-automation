@@ -4,6 +4,7 @@ import {
     classifyEmployeeIdCreateFailure,
     classifyEmployeeLookup,
     isAuthenticationRejected,
+    isInstallerRoute,
     matchesRequestedEmployeeIdentity,
     parseSetCookies,
     type EmployeeRecordIdentity,
@@ -80,6 +81,12 @@ test('lookup classification distinguishes absence from an API error', () => {
 test('authentication rejection recognises only redirects back to login', () => {
     assert.equal(isAuthenticationRejected('/web/index.php/auth/login'), true);
     assert.equal(isAuthenticationRejected('/web/index.php/dashboard/index'), false);
+});
+
+test('installer detection recognises relative and absolute installer routes', () => {
+    assert.equal(isInstallerRoute('/installer/index.php'), true);
+    assert.equal(isInstallerRoute('http://localhost:8080/installer'), true);
+    assert.equal(isInstallerRoute('/web/index.php/auth/login'), false);
 });
 
 test('duplicate classification requires the documented parsed 5.8.1 response', () => {

@@ -11,9 +11,9 @@ one-off), then **restore many** (Phase B, every run).
 | `db/seed.sql` | `mysqldump` of the installed `orangehrm` database (schema + reference data + the `Admin` user). Restored on first start of an empty MySQL data dir via `/docker-entrypoint-initdb.d`. |
 | `provisioning/Conf.php` | The `lib/confs/Conf.php` the installer wrote, pointing OrangeHRM at the `db` service. Mounted into the web container so the app boots **already installed** on any fresh start — including a clean CI runner, where the app volume is empty and the app would otherwise re-run the installer despite a populated database. |
 
-With both mounted (see `docker-compose.yml`), `docker compose up` brings the stack up
-installed, with `Admin` / `admin123` working straight to the dashboard. No installer, no
-migration.
+With both mounted (see `docker-compose.yml`), `docker compose up` restores the intended installed
+state. Do not infer that state from Apache health alone: `npm run test:readiness` must prove the
+installed login exchange and authenticated PIM API before warm-up or tests.
 
 ## Demo parity: why `admin123` needs two adjustments
 
@@ -68,9 +68,11 @@ The installer is never part of a test run.
 ## Phase B — restore many (every run)
 
 `docker compose up` restores `db/seed.sql` into a fresh MySQL data dir and mounts
-`Conf.php`, so the app comes up installed and clean. To force a re-restore (the init script
+`Conf.php`, so the app is intended to come up installed and clean. The bounded readiness command
+proves that contract rather than trusting the web-server response. To force a re-restore (the init script
 only fires on an empty data dir), recreate the database volume between runs:
 
 ```bash
-docker compose down -v && docker compose up -d   # cleanest: wipes both volumes, restores seed
+docker compose down -v && docker compose up -d --wait   # wipes both volumes, restores seed
+BASE_URL=http://localhost:8080 npm run test:readiness   # installed login + authenticated API
 ```

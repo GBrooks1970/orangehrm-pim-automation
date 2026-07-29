@@ -5,6 +5,7 @@ import {
     classifyEmployeeLookup,
     isAuthenticationRejected,
     isEmployeeRecordIdentity,
+    isInstallerRoute,
     matchesRequestedEmployeeIdentity,
     parseSetCookies,
     type Cookie,
@@ -257,7 +258,7 @@ export const OrangeHrm = {
      * Resolve and cache the admin session for the run. Call once in BeforeAll
      * before any API task executes or any scenario logs the browser in.
      */
-    authenticate: async (): Promise<void> => {
+    authenticate: async (signal?: AbortSignal): Promise<void> => {
         if (session) return;
 
         const username = process.env.ORANGEHRM_ADMIN_USERNAME
@@ -275,10 +276,23 @@ export const OrangeHrm = {
 
         // 1. GET the login page: capture the initial session cookie and the
         //    CSRF `_token` the validate endpoint requires.
-        const loginPage = await fetch(webUrl('auth/login'), { redirect: 'manual' });
+        const loginPage = await fetch(webUrl('auth/login'), { redirect: 'manual', signal });
+        const loginLocation = loginPage.headers.get('location') ?? '';
+        if (isInstallerRoute(loginLocation)) {
+            throw new Error(
+                `OrangeHRM is serving its installer (${loginLocation}) instead of the installed login surface. ` +
+                `Verify the mounted provisioning/Conf.php and seeded database.`,
+            );
+        }
         let cookie = parseSetCookies(loginPage.headers.get('set-cookie'))
             .find(c => /orangehrm/i.test(c.name));
         const html = await loginPage.text();
+        if (!loginPage.ok) {
+            throw new Error(
+                `OrangeHRM login surface is not ready at ${BASE_URL} ` +
+                `(HTTP ${loginPage.status}): ${html.slice(0, 300)}`,
+            );
+        }
         const token = /name="_token"\s+value="([^"]+)"/.exec(html)?.[1]
             ?? /:token="&quot;([^&]+)&quot;"/.exec(html)?.[1];
         if (!cookie || !token) {
@@ -298,6 +312,7 @@ export const OrangeHrm = {
                 Cookie: `${cookie.name}=${cookie.value}`,
             },
             body: form.toString(),
+            signal,
         });
         // The validate response usually rotates the session cookie (session
         // fixation defence); adopt the new one when present.
@@ -308,6 +323,12 @@ export const OrangeHrm = {
         // A successful login redirects to the dashboard; a failure re-renders the
         // login page (still 302, but back to auth/login).
         const location = validate.headers.get('location') ?? '';
+        if (isInstallerRoute(location)) {
+            throw new Error(
+                `OrangeHRM redirected authentication to its installer (${location}). ` +
+                `Verify the mounted provisioning/Conf.php and seeded database.`,
+            );
+        }
         if (isAuthenticationRejected(location)) {
             throw new Error(`OrangeHRM login was rejected for user "${username}" (redirected back to the login page).`);
         }
@@ -323,6 +344,38 @@ export const OrangeHrm = {
             );
         }
         return session;
+    },
+
+    /**
+     * Prove the authenticated PIM API surface is available without changing data.
+     * Used by the bounded readiness gate before warm-up or Cucumber begins.
+     */
+    verifyEmployeeApiReady: async (signal?: AbortSignal): Promise<number> => {
+        const cookie = OrangeHrm.sessionCookie();
+        const response = await fetch(webUrl('api/v2/pim/employees?limit=1'), {
+            headers: { Cookie: `${cookie.name}=${cookie.value}` },
+            signal,
+        });
+        const detail = await response.text();
+        if (!response.ok) {
+            throw new Error(
+                `OrangeHRM authenticated employee API is not ready ` +
+                `(HTTP ${response.status}): ${detail}`,
+            );
+        }
+
+        try {
+            const payload = JSON.parse(detail) as { data?: unknown };
+            if (!Array.isArray(payload.data) || !payload.data.every(isEmployeeRecordIdentity)) {
+                throw new Error('response data is not an employee array');
+            }
+            return payload.data.length;
+        } catch (error) {
+            throw new Error(
+                `OrangeHRM authenticated employee API returned malformed data: ` +
+                `${error instanceof Error ? error.message : String(error)}`,
+            );
+        }
     },
 
     /**

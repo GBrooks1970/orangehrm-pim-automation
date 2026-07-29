@@ -1,10 +1,10 @@
 # E2E workflow. Provisions the local OrangeHRM stack from the committed seed,
-# warms the cold SPA, runs the active suite against it, and publishes the Serenity
-# living-documentation report to GitHub Pages on main.
+# proves the installed login and authenticated API are ready, warms the cold SPA,
+# runs the active suite, and publishes the Serenity living-documentation report.
 #
 # Provisioning is automatic: docker-compose mounts db/seed.sql and provisioning/
-# Conf.php, so `docker compose up --wait` brings the app up already installed with
-# Admin / admin123 — no installer (see docs/docker-image-decision.md, db/README.md).
+# Conf.php. Compose proves database/Apache transport health; `test:readiness` then
+# proves the installed login and authenticated API before any warm-up or test.
 
 name: e2e
 
@@ -48,11 +48,15 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      # Start the stack and block on healthchecks. The MySQL init restores
-      # db/seed.sql on first start of the empty data dir, so "db healthy" means the
-      # seed is in place; the app reads provisioning/Conf.php and boots installed.
+      # Start the stack and block on database/Apache transport healthchecks. The
+      # following state probe, not this transport signal, proves OrangeHRM installed.
       - name: Start OrangeHRM
         run: docker compose up -d --wait
+
+      - name: Verify installed OrangeHRM readiness
+        env:
+          BASE_URL: http://localhost:8080
+        run: npm run test:readiness
 
       # Smoke-check and warm up. The Vue SPA and PHP OPcache pay a first-render
       # penalty on a cold boot; priming the login and PIM pages pays it outside any
