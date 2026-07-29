@@ -26,16 +26,17 @@ read-only UI query. A fail-fast hook rejects every non-loopback target before br
 
 ## 3. Automation gates
 
-1. **Target contract:** `npm run test:target-contract`, every profile loads the pre-browser
-   loopback guard and representative remote/malformed targets are rejected.
+1. **TypeScript type check:** `npm run typecheck`, zero errors, run immediately after dependency
+   installation so static defects fail before browser download or Docker startup.
 2. **Dependency audit:** `npm audit --audit-level=high`, no unaccepted High or Critical finding.
-3. **TypeScript type check:** `npx tsc --noEmit`, zero errors.
+3. **Target contract:** `npm run test:target-contract`, every profile loads the pre-browser
+   loopback guard and representative remote/malformed targets are rejected.
 4. **Active suite:** `npm test` (`--tags "not @deferred"`), all pass.
 5. **Living-documentation report:** `npm run test:report`, no generation errors.
 
-The `e2e` workflow enforces the target contract, High-severity audit gate, active suite, and report
-path on every push to `main` and every pull request against local Dockerised OrangeHRM. CODEX-04
-tracks adding the documented TypeScript command to that workflow before browser and Docker setup.
+The `e2e` workflow enforces the TypeScript, High-severity audit, target-contract, active-suite, and
+report gates on every push to `main` and every pull request against local Dockerised OrangeHRM.
+The cheap TypeScript gate runs immediately after `npm ci`, before browser or Docker setup.
 
 ## 4. Metrics and reporting
 
