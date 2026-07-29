@@ -45,6 +45,8 @@ Organised by Screenplay layer, one folder each:
   state reset and a fresh scenario notepad.
 - **API client:** `src/api/OrangeHrmApiClient.ts`, session-cookie auth plus employee seed
   and exact employee/account verification against REST API v2.
+- **API policy:** `src/api/OrangeHrmApiPolicy.ts`, pure cookie, lookup, duplicate, and identity
+  decisions covered without a running SUT.
 - **Scenario support:** `src/support/ScenarioNotes.ts`, typed scenario-owned identities and
   masked credentials shared across Screenplay activities.
 - **Config:** `src/serenity.config.ts`, reporter crew only.
@@ -54,6 +56,7 @@ Organised by Screenplay layer, one folder each:
 | Command | Purpose |
 |---|---|
 | `npm test` | Run the active suite (excludes `@deferred`) |
+| `npm run test:unit` | Run the fast SUT-independent API-policy and target-safety tests |
 | `npm run test:smoke:local` | Run the one-scenario local smoke selection |
 | `npm run test:target-contract` | Prove every profile loads the pre-browser loopback guard |
 | `npm audit --audit-level=high` | Gate the locked test/report toolchain against High advisories |
@@ -80,7 +83,8 @@ orangehrm-pim-automation/
 │   ├── tasks/                         # Login, employee CRUD/search, and issued-account verification/login
 │   ├── questions/                     # Employee list/details, validation messages, current signed-in user
 │   ├── api/
-│   │   └── OrangeHrmApiClient.ts       # REST API v2 — session auth + employee/account verification
+│   │   ├── OrangeHrmApiClient.ts       # REST API v2 — session auth + employee/account verification
+│   │   └── OrangeHrmApiPolicy.ts       # Pure cookie, response and fixture-identity decisions
 │   ├── support/
 │   │   └── ScenarioNotes.ts            # Typed scenario-scoped issued account and employee identity
 │   ├── actors/                        # Reserved — actor setup via hooks
@@ -99,6 +103,8 @@ orangehrm-pim-automation/
 │   └── ci.yml                         # Start stack → warm-up → suite → publish report
 ├── scripts/
 │   └── verify-local-target-contract.ts# Static profile/guard contract check
+├── tests/unit/
+│   └── api-policy.test.ts             # Node test runner; deterministic and SUT-independent
 ├── docker-compose.yml                 # Local OrangeHRM + MySQL stack
 ├── cucumber.js                        # Cucumber profile — paths, tags, format, ts-node
 ├── tsconfig.json
@@ -153,6 +159,6 @@ row), never the transient success toast that flashes after save.
 ## 6. Known issues and technical debt
 
 The suite has been built to green since 2026-06-23. Open items are tracked in
-`docs/backlog.md` (Items #1–#6 and CODEX-01–05 are closed; CODEX-06–11 remain open); the historical build order is
+`docs/backlog.md` (Items #1–#6 and CODEX-01–06 are closed; CODEX-07–11 remain open); the historical build order is
 recorded in `docs/implementation-plan.md`. The local image tag and seeded-database path
 (backlog #1) that the whole suite asserts against was confirmed during that build.

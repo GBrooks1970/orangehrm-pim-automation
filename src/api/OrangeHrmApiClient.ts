@@ -1,5 +1,12 @@
 import { BASE_URL, webUrl } from '../serenity.config';
 import { isLocalExecutionTarget } from '../config/target-safety';
+import {
+    classifyEmployeeIdCreateFailure,
+    classifyEmployeeLookup,
+    parseSetCookies,
+    type Cookie,
+    type EmployeeRecordIdentity,
+} from './OrangeHrmApiPolicy';
 
 /**
  * Thin client over OrangeHRM's session-authenticated REST API v2, used to
@@ -31,14 +38,7 @@ export interface NewEmployee {
     employeeId?: string;
 }
 
-export interface SeededEmployee {
-    empNumber: number;
-    employeeId: string;
-    firstName: string;
-    lastName: string;
-}
-
-interface Cookie { name: string; value: string }
+export type SeededEmployee = EmployeeRecordIdentity;
 
 interface SystemUser {
     userName: string;
@@ -52,18 +52,6 @@ interface SystemUser {
 }
 
 let session: Cookie | undefined;
-
-/** Parse the cookies set across one or more `set-cookie` header lines. */
-const parseSetCookies = (header: string | null): Cookie[] => {
-    if (!header) return [];
-    // Node's fetch joins multiple Set-Cookie headers with ", " — split on the
-    // boundary before a `name=` pair, not on the commas inside `Expires=`.
-    return header.split(/,(?=\s*[^=;,\s]+=)/).map(part => {
-        const [pair] = part.trim().split(';');
-        const eq = pair.indexOf('=');
-        return { name: pair.slice(0, eq).trim(), value: pair.slice(eq + 1).trim() };
-    }).filter(c => c.name.length > 0);
-};
 
 export const OrangeHrm = {
     /**
@@ -221,13 +209,12 @@ export const OrangeHrm = {
         const lookup = await fetch(webUrl(`api/v2/pim/employees?nameOrId=${query}&limit=50`), {
             headers: { Cookie: `${cookie.name}=${cookie.value}` },
         });
-        if (lookup.ok) {
-            const { data } = (await lookup.json()) as { data: SeededEmployee[] };
-            const exists = data.some(e =>
-                e.firstName?.toLowerCase() === firstName.toLowerCase() &&
-                e.lastName?.toLowerCase() === lastName.toLowerCase());
-            if (exists) return;
-        }
+        const employees = lookup.ok
+            ? ((await lookup.json()) as { data: SeededEmployee[] }).data
+            : [];
+        const decision = classifyEmployeeLookup(lookup.status, employees, { firstName, lastName });
+        if (decision.kind === 'found') return;
+
         await OrangeHrm.createEmployee({ firstName, lastName });
     },
 
@@ -252,7 +239,7 @@ export const OrangeHrm = {
 
         const detail = await response.text();
         // A uniqueness clash means the id is already present — precondition met.
-        if (response.status === 422 || /unique|already|exist/i.test(detail)) return;
+        if (classifyEmployeeIdCreateFailure(response.status, detail) === 'duplicate') return;
         throw new Error(
             `Failed to ensure an employee with Employee Id "${employeeId}" exists ` +
             `(HTTP ${response.status}): ${detail}`,

@@ -28,15 +28,20 @@ read-only UI query. A fail-fast hook rejects every non-loopback target before br
 
 1. **TypeScript type check:** `npm run typecheck`, zero errors, run immediately after dependency
    installation so static defects fail before browser download or Docker startup.
-2. **Dependency audit:** `npm audit --audit-level=high`, no unaccepted High or Critical finding.
-3. **Target contract:** `npm run test:target-contract`, every profile loads the pre-browser
+2. **Lower-level policy tests:** `npm run test:unit`, deterministic and SUT-independent coverage
+   for session-cookie parsing, loopback safety, API response/duplicate classification, and exact
+   requested fixture identity; run before browser download or Docker startup.
+3. **Dependency audit:** `npm audit --audit-level=high`, no unaccepted High or Critical finding.
+4. **Target contract:** `npm run test:target-contract`, every profile loads the pre-browser
    loopback guard and representative remote/malformed targets are rejected.
-4. **Active suite:** `npm test` (`--tags "not @deferred"`), all pass.
-5. **Living-documentation report:** `npm run test:report`, no generation errors.
+5. **Active suite:** `npm test` (`--tags "not @deferred"`), all pass.
+6. **Living-documentation report:** `npm run test:report`, no generation errors.
 
-The `e2e` workflow enforces the TypeScript, High-severity audit, target-contract, active-suite, and
-report gates on every push to `main` and every pull request against local Dockerised OrangeHRM.
-The cheap TypeScript gate runs immediately after `npm ci`, before browser or Docker setup.
+The `e2e` workflow enforces the TypeScript, lower-level, High-severity audit, target-contract,
+active-suite, and report gates on every push to `main` and every pull request against local
+Dockerised OrangeHRM.
+The cheap TypeScript and lower-level gates run immediately after `npm ci`, before browser or
+Docker setup.
 
 ## 4. Metrics and reporting
 
@@ -77,6 +82,7 @@ first render after the mutation.
 
 ```bash
 npm install
+npm run test:unit                           # fast; no SUT or browser required
 npm run test:target-contract                 # no SUT; verifies every profile's loopback guard
 npm test                                   # full active suite
 npm run test:smoke:local                   # one-scenario local smoke selection
@@ -104,6 +110,6 @@ npm run test:report
 
 ## 7. Open improvements
 
-Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01–05 are closed; CODEX-06–11 remain open.
+Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01–06 are closed; CODEX-07–11 remain open.
 The local image tag and seeded-database path the suite asserts against (backlog #1) was confirmed
 during the 2026-06-23 build.

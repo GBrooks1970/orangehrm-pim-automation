@@ -33,6 +33,9 @@ npm install
 # Run the full active suite (excludes quarantined scenarios)
 npm test
 
+# Run the fast SUT-independent API-policy and target-safety tests
+npm run test:unit
+
 # Run the narrower one-scenario smoke selection against the local target
 npm run test:smoke:local
 
@@ -76,7 +79,8 @@ Implemented and green. All 7 active scenarios pass against the local Dockerised 
 (`npm test` → 7/7, deterministic across re-runs), covering add-employee (with and without
 login details), search, update nationality, delete, and the missing-last-name and duplicate-id
 validations. Provisioning is automated (`docker compose up` restores the seeded target and
-boots installed); CI runs the suite and publishes the Serenity living documentation. See
+boots installed); CI runs the fast lower-level lane before browser/Docker setup, then runs the
+suite and publishes the Serenity living documentation. See
 `docs/implementation-plan.md` and `db/README.md`.
 
 ## Licence
