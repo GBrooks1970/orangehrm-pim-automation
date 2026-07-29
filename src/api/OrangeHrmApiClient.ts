@@ -3,9 +3,14 @@ import { isLocalExecutionTarget } from '../config/target-safety';
 import {
     classifyEmployeeIdCreateFailure,
     classifyEmployeeLookup,
+    isAuthenticationRejected,
+    isEmployeeRecordIdentity,
+    matchesRequestedEmployeeIdentity,
     parseSetCookies,
     type Cookie,
+    type EmployeeLookupDecision,
     type EmployeeRecordIdentity,
+    type RequestedEmployeeIdentity,
 } from './OrangeHrmApiPolicy';
 
 /**
@@ -52,6 +57,200 @@ interface SystemUser {
 }
 
 let session: Cookie | undefined;
+
+type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
+type UrlBuilder = (path: string) => string;
+
+/**
+ * Testable employee-fixture boundary. Transport and URL construction are
+ * injected so response/error decisions can be exercised without a browser or
+ * running SUT; production uses Node fetch and the configured OrangeHRM URL.
+ */
+export class EmployeeFixtureClient {
+    constructor(
+        private readonly cookie: Cookie,
+        private readonly fetchImpl: FetchLike = fetch,
+        private readonly urlFor: UrlBuilder = webUrl,
+    ) {}
+
+    private authHeaders(): Record<string, string> {
+        return { Cookie: `${this.cookie.name}=${this.cookie.value}` };
+    }
+
+    private parseEmployees(detail: string, operation: string): SeededEmployee[] {
+        try {
+            const payload = JSON.parse(detail) as { data?: unknown };
+            if (!Array.isArray(payload.data) || !payload.data.every(isEmployeeRecordIdentity)) {
+                throw new Error('response data is not an employee array');
+            }
+            return payload.data;
+        } catch (error) {
+            throw new Error(
+                `${operation} returned malformed employee data: ` +
+                `${error instanceof Error ? error.message : String(error)}`,
+            );
+        }
+    }
+
+    private parseCreatedEmployee(detail: string, operation: string): SeededEmployee {
+        try {
+            const payload = JSON.parse(detail) as { data?: unknown };
+            if (!isEmployeeRecordIdentity(payload.data)) {
+                throw new Error('response data is not an employee record');
+            }
+            return payload.data;
+        } catch (error) {
+            throw new Error(
+                `${operation} returned malformed employee data: ` +
+                `${error instanceof Error ? error.message : String(error)}`,
+            );
+        }
+    }
+
+    private async lookupEmployee(
+        parameters: Record<string, string>,
+        requested: RequestedEmployeeIdentity,
+        operation: string,
+    ): Promise<EmployeeLookupDecision> {
+        const query = new URLSearchParams({ ...parameters, limit: '50' });
+        const response = await this.fetchImpl(
+            this.urlFor(`api/v2/pim/employees?${query.toString()}`),
+            { headers: this.authHeaders() },
+        );
+        const detail = await response.text();
+
+        if (!response.ok) {
+            throw new Error(`${operation} failed (HTTP ${response.status}): ${detail}`);
+        }
+
+        return classifyEmployeeLookup(
+            response.status,
+            this.parseEmployees(detail, operation),
+            requested,
+        );
+    }
+
+    private async postEmployee(employee: NewEmployee): Promise<{ response: Response; detail: string }> {
+        const body: Record<string, unknown> = {
+            firstName: employee.firstName,
+            middleName: employee.middleName ?? '',
+            lastName: employee.lastName,
+            empPicture: null,
+        };
+        if (employee.employeeId !== undefined) body.employeeId = employee.employeeId;
+
+        const response = await this.fetchImpl(this.urlFor('api/v2/pim/employees'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...this.authHeaders(),
+            },
+            body: JSON.stringify(body),
+        });
+
+        return { response, detail: await response.text() };
+    }
+
+    private async verifyPersistedEmployee(
+        created: SeededEmployee,
+        requested: RequestedEmployeeIdentity,
+        operation: string,
+    ): Promise<SeededEmployee> {
+        const exactIdentity: RequestedEmployeeIdentity = {
+            ...requested,
+            empNumber: created.empNumber,
+            employeeId: requested.employeeId ?? created.employeeId,
+        };
+        if (!matchesRequestedEmployeeIdentity(created, exactIdentity)) {
+            throw new Error(`${operation} returned an employee that does not match the requested identity.`);
+        }
+
+        const readBack = await this.lookupEmployee(
+            { empNumber: String(created.empNumber) },
+            exactIdentity,
+            `${operation} read-back`,
+        );
+        if (readBack.kind !== 'found') {
+            throw new Error(`${operation} did not persist the exact requested employee identity.`);
+        }
+        return readBack.employee;
+    }
+
+    /** Create an employee and prove the exact returned identity persisted. */
+    async createEmployee(employee: NewEmployee): Promise<SeededEmployee> {
+        const { response, detail } = await this.postEmployee(employee);
+        const operation = `Creating employee "${employee.firstName} ${employee.lastName}"`;
+        if (!response.ok) {
+            throw new Error(`${operation} failed (HTTP ${response.status}): ${detail}`);
+        }
+
+        return this.verifyPersistedEmployee(
+            this.parseCreatedEmployee(detail, operation),
+            employee,
+            operation,
+        );
+    }
+
+    /** Return the exact named employee, creating and verifying it only when absent. */
+    async ensureEmployeeExists(firstName: string, lastName: string): Promise<SeededEmployee> {
+        const requested = { firstName, lastName };
+        const operation = `Looking up employee "${firstName} ${lastName}"`;
+        const lookup = await this.lookupEmployee(
+            { nameOrId: `${firstName} ${lastName}` },
+            requested,
+            operation,
+        );
+        if (lookup.kind === 'found') return lookup.employee;
+
+        return this.createEmployee(requested);
+    }
+
+    /**
+     * Return an exact Employee Id fixture. A documented duplicate validation is
+     * accepted only when an immediate read-back proves the same requested record.
+     */
+    async ensureEmployeeWithId(
+        employeeId: string,
+        firstName: string,
+        lastName: string,
+    ): Promise<SeededEmployee> {
+        const requested = { employeeId, firstName, lastName };
+        const operation = `Looking up Employee Id "${employeeId}"`;
+        const lookup = await this.lookupEmployee(
+            { employeeId },
+            requested,
+            operation,
+        );
+        if (lookup.kind === 'found') return lookup.employee;
+
+        const { response, detail } = await this.postEmployee(requested);
+        const createOperation = `Creating Employee Id "${employeeId}"`;
+        if (response.ok) {
+            return this.verifyPersistedEmployee(
+                this.parseCreatedEmployee(detail, createOperation),
+                requested,
+                createOperation,
+            );
+        }
+
+        if (classifyEmployeeIdCreateFailure(response.status, detail) !== 'duplicate') {
+            throw new Error(`${createOperation} failed (HTTP ${response.status}): ${detail}`);
+        }
+
+        const readBack = await this.lookupEmployee(
+            { employeeId },
+            requested,
+            `Reading back duplicate Employee Id "${employeeId}"`,
+        );
+        if (readBack.kind !== 'found') {
+            throw new Error(
+                `${createOperation} received the documented duplicate response, but ` +
+                `no existing employee matched the exact requested identity.`,
+            );
+        }
+        return readBack.employee;
+    }
+}
 
 export const OrangeHrm = {
     /**
@@ -109,7 +308,7 @@ export const OrangeHrm = {
         // A successful login redirects to the dashboard; a failure re-renders the
         // login page (still 302, but back to auth/login).
         const location = validate.headers.get('location') ?? '';
-        if (/auth\/login/i.test(location)) {
+        if (isAuthenticationRejected(location)) {
             throw new Error(`OrangeHRM login was rejected for user "${username}" (redirected back to the login page).`);
         }
         session = cookie;
@@ -131,31 +330,7 @@ export const OrangeHrm = {
      * Backs the `an employee exists` Background steps (ADR-0003).
      */
     createEmployee: async (employee: NewEmployee): Promise<SeededEmployee> => {
-        const cookie = OrangeHrm.sessionCookie();
-        const body: Record<string, unknown> = {
-            firstName: employee.firstName,
-            middleName: employee.middleName ?? '',
-            lastName: employee.lastName,
-            empPicture: null,
-        };
-        if (employee.employeeId !== undefined) body.employeeId = employee.employeeId;
-
-        const response = await fetch(webUrl('api/v2/pim/employees'), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Cookie: `${cookie.name}=${cookie.value}`,
-            },
-            body: JSON.stringify(body),
-        });
-        if (!response.ok) {
-            throw new Error(
-                `Failed to seed employee "${employee.firstName} ${employee.lastName}" ` +
-                `via REST API v2 (HTTP ${response.status}): ${await response.text()}`,
-            );
-        }
-        const { data } = (await response.json()) as { data: SeededEmployee };
-        return data;
+        return new EmployeeFixtureClient(OrangeHrm.sessionCookie()).createEmployee(employee);
     },
 
     /**
@@ -203,46 +378,23 @@ export const OrangeHrm = {
      * row actions below the fold). Looks the employee up first and only creates one
      * when absent.
      */
-    ensureEmployeeExists: async (firstName: string, lastName: string): Promise<void> => {
-        const cookie = OrangeHrm.sessionCookie();
-        const query = encodeURIComponent(`${firstName} ${lastName}`);
-        const lookup = await fetch(webUrl(`api/v2/pim/employees?nameOrId=${query}&limit=50`), {
-            headers: { Cookie: `${cookie.name}=${cookie.value}` },
-        });
-        const employees = lookup.ok
-            ? ((await lookup.json()) as { data: SeededEmployee[] }).data
-            : [];
-        const decision = classifyEmployeeLookup(lookup.status, employees, { firstName, lastName });
-        if (decision.kind === 'found') return;
-
-        await OrangeHrm.createEmployee({ firstName, lastName });
+    ensureEmployeeExists: async (firstName: string, lastName: string): Promise<SeededEmployee> => {
+        return new EmployeeFixtureClient(OrangeHrm.sessionCookie())
+            .ensureEmployeeExists(firstName, lastName);
     },
 
     /**
      * Ensure an employee with the given Employee Id exists — the precondition for
-     * the duplicate-id validation scenario. Idempotent: the id may already be taken
-     * (the seeded admin holds `0001`), which equally satisfies "an employee with
-     * this id exists", so a uniqueness conflict is treated as success rather than
-     * an error.
+     * the duplicate-id validation scenario. It is idempotent only for the same
+     * exact employee: a recognised uniqueness response must be followed by a
+     * matching Employee Id/name read-back before setup succeeds.
      */
-    ensureEmployeeWithId: async (employeeId: string, firstName: string, lastName: string): Promise<void> => {
-        const cookie = OrangeHrm.sessionCookie();
-        const response = await fetch(webUrl('api/v2/pim/employees'), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Cookie: `${cookie.name}=${cookie.value}`,
-            },
-            body: JSON.stringify({ firstName, middleName: '', lastName, employeeId, empPicture: null }),
-        });
-        if (response.ok) return;
-
-        const detail = await response.text();
-        // A uniqueness clash means the id is already present — precondition met.
-        if (classifyEmployeeIdCreateFailure(response.status, detail) === 'duplicate') return;
-        throw new Error(
-            `Failed to ensure an employee with Employee Id "${employeeId}" exists ` +
-            `(HTTP ${response.status}): ${detail}`,
-        );
+    ensureEmployeeWithId: async (
+        employeeId: string,
+        firstName: string,
+        lastName: string,
+    ): Promise<SeededEmployee> => {
+        return new EmployeeFixtureClient(OrangeHrm.sessionCookie())
+            .ensureEmployeeWithId(employeeId, firstName, lastName);
     },
 };

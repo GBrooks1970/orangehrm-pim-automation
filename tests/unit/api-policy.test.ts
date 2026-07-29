@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
     classifyEmployeeIdCreateFailure,
     classifyEmployeeLookup,
+    isAuthenticationRejected,
     matchesRequestedEmployeeIdentity,
     parseSetCookies,
     type EmployeeRecordIdentity,
@@ -76,15 +77,35 @@ test('lookup classification distinguishes absence from an API error', () => {
     );
 });
 
-test('duplicate classification captures status and message branches', () => {
+test('authentication rejection recognises only redirects back to login', () => {
+    assert.equal(isAuthenticationRejected('/web/index.php/auth/login'), true);
+    assert.equal(isAuthenticationRejected('/web/index.php/dashboard/index'), false);
+});
+
+test('duplicate classification requires the documented parsed 5.8.1 response', () => {
+    const duplicateDetail = JSON.stringify({
+        error: {
+            status: '422',
+            message: 'Invalid Parameter',
+            data: { invalidParamKeys: ['employeeId'] },
+        },
+    });
     assert.equal(
-        classifyEmployeeIdCreateFailure(422, '{"error":"Employee Id already exists"}'),
+        classifyEmployeeIdCreateFailure(422, duplicateDetail),
         'duplicate',
     );
     assert.equal(
-        classifyEmployeeIdCreateFailure(409, 'unique constraint violation'),
-        'duplicate',
+        classifyEmployeeIdCreateFailure(422, JSON.stringify({
+            error: {
+                status: '422',
+                message: 'Invalid Parameter',
+                data: { invalidParamKeys: ['firstName'] },
+            },
+        })),
+        'error',
     );
+    assert.equal(classifyEmployeeIdCreateFailure(422, 'not json'), 'error');
+    assert.equal(classifyEmployeeIdCreateFailure(409, duplicateDetail), 'error');
     assert.equal(classifyEmployeeIdCreateFailure(500, 'database unavailable'), 'error');
 });
 

@@ -57,6 +57,7 @@ Organised by Screenplay layer, one folder each:
 |---|---|
 | `npm test` | Run the active suite (excludes `@deferred`) |
 | `npm run test:unit` | Run the fast SUT-independent API-policy and target-safety tests |
+| `npm run test:api-contract` | Against local Docker, prove exact employee create/reuse/read-back semantics |
 | `npm run test:smoke:local` | Run the one-scenario local smoke selection |
 | `npm run test:target-contract` | Prove every profile loads the pre-browser loopback guard |
 | `npm audit --audit-level=high` | Gate the locked test/report toolchain against High advisories |
@@ -103,8 +104,9 @@ orangehrm-pim-automation/
 │   └── ci.yml                         # Start stack → warm-up → suite → publish report
 ├── scripts/
 │   └── verify-local-target-contract.ts# Static profile/guard contract check
-├── tests/unit/
-│   └── api-policy.test.ts             # Node test runner; deterministic and SUT-independent
+├── tests/
+│   ├── unit/                           # Node test runner; deterministic and SUT-independent
+│   └── contract/                       # Thin employee API check against local Docker
 ├── docker-compose.yml                 # Local OrangeHRM + MySQL stack
 ├── cucumber.js                        # Cucumber profile — paths, tags, format, ts-node
 ├── tsconfig.json
@@ -125,18 +127,20 @@ What happens when `npm test` runs:
 4. `src/hooks/browser.hooks.ts` registers `BeforeAll`, `Before`, `AfterAll`.
 5. Once per run: `BeforeAll` rejects a non-loopback `BASE_URL` before it launches Chromium or
    authenticates the API client, then holds the local admin session cookie for seeding.
-6. Per scenario: `Before` resets browser state and engages the actor with
+6. In CI, `test:api-contract` proves the authenticated employee fixture boundary against the
+   running local API before Cucumber begins.
+7. Per scenario: `Before` resets browser state and engages the actor with
    `BrowseTheWebWithPlaywright` plus an empty `TakeNotes` notepad. API setup
    (authentication, seeding) runs through a dedicated module-level client, deliberately
    outside the actor model (ADR-0003).
-7. Cucumber matches steps to `src/step-definitions/`.
-8. Step definitions call `actorCalled('User').attemptsTo(Task...)` or
+8. Cucumber matches steps to `src/step-definitions/`.
+9. Step definitions call `actorCalled('User').attemptsTo(Task...)` or
    `Ensure.that(Question, matcher)`.
-9. Tasks decompose to Interactions against Playwright.
-10. `Wait.upTo(...).until(element, isVisible())` guards every async Vue transition; the
+10. Tasks decompose to Interactions against Playwright.
+11. `Wait.upTo(...).until(element, isVisible())` guards every async Vue transition; the
     default ceiling is too short for a cold SPA, so it is set explicitly.
-11. Once per run: `AfterAll` closes the browser.
-12. The ArtifactArchiver writes Serenity JSON to `docs/reports/`; `npm run test:report`
+12. Once per run: `AfterAll` closes the browser.
+13. The ArtifactArchiver writes Serenity JSON to `docs/reports/`; `npm run test:report`
     renders the HTML living documentation, published by CI.
 
 ## 5. SUT-specific constraints
@@ -149,6 +153,7 @@ What happens when `npm test` runs:
 | Employee Id auto-fill | Read or override the auto-filled Employee Id deliberately | The form pre-fills the next Id; assertions and the duplicate-id case depend on a known value | `AddEmployee` task |
 | Autocomplete search | Wait for the result option to render before selecting | The employee-name search is a debounced async autocomplete | Task-level wait |
 | Data setup | Seed employees through REST API v2, not the UI | UI creation is slow and is the behaviour under test elsewhere | ADR-0003 |
+| Fixture identity | Treat only a successful empty lookup as absent; parse the duplicate validation payload; read back exact Employee Id/name/`empNumber` | HTTP 422 also represents unrelated validation errors, and stale records can satisfy loose lookup logic | `EmployeeFixtureClient`, unit + API contract tests |
 | Shared demo non-determinism | Reject every non-loopback execution target before browser/API setup | The public demo is shared and even the smoke Background can conditionally write | ADR-0002, `target-safety.ts` |
 | Stable assertion | Assert on employee identity (full name + Employee Id), not transient toasts | The post-save success toast is timing-sensitive and disappears; the record and list row are stable | questions, gherkin-style-guide |
 
@@ -159,6 +164,6 @@ row), never the transient success toast that flashes after save.
 ## 6. Known issues and technical debt
 
 The suite has been built to green since 2026-06-23. Open items are tracked in
-`docs/backlog.md` (Items #1–#6 and CODEX-01–06 are closed; CODEX-07–11 remain open); the historical build order is
+`docs/backlog.md` (Items #1–#6 and CODEX-01–07 are closed; CODEX-08–11 remain open); the historical build order is
 recorded in `docs/implementation-plan.md`. The local image tag and seeded-database path
 (backlog #1) that the whole suite asserts against was confirmed during that build.
