@@ -145,6 +145,6 @@ docker compose down -v
 
 ## 7. Backlog status
 
-Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01–12 are closed; CODEX-13 remains open.
+Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01–13 are closed; nothing remains open.
 The local image tag and seeded-database path the suite asserts against (backlog #1) was confirmed
 during the 2026-06-23 build.

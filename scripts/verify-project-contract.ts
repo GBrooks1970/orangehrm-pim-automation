@@ -86,6 +86,13 @@ for (const pattern of [
     assert.ok(imageDecision.includes(match[1]), `Image decision is missing Compose digest ${match[1]}`);
 }
 assert.match(
+    read('.github/dependabot.yml'),
+    /dependency-name:\s*typescript[\s\S]*?versions:\s*\n\s*- ">=6\.0\.0"/,
+    'Dependabot must hold unsupported TypeScript 6.x and newer releases',
+);
+assert.match(read('docs/dependency-policy.md'), /TS5107:[\s\S]*moduleResolution: "node"/);
+assert.match(read('docs/dependency-policy.md'), /Release the\s+`>=6\.0\.0` Dependabot hold only/);
+assert.match(
     read('docs/implementation-plan.md'),
     /Retained[\s\S]*as a historical record of the original plan, not a description of current state\./,
 );
