@@ -1,4 +1,4 @@
-import { BeforeAll, Before, AfterAll, setDefaultTimeout } from '@cucumber/cucumber';
+import { BeforeAll, Before, After, AfterAll, setDefaultTimeout } from '@cucumber/cucumber';
 import { Cast, engage, TakeNotes } from '@serenity-js/core';
 import { BrowseTheWebWithPlaywright } from '@serenity-js/playwright';
 import { chromium } from 'playwright';
@@ -7,6 +7,11 @@ import { OrangeHrm } from '../api/OrangeHrmApiClient';
 import { assertLocalExecutionTarget } from '../config/target-safety';
 import { BASE_URL } from '../serenity.config';
 import { ScenarioNotes } from '../support/ScenarioNotes';
+import {
+    beginScenarioOwnership,
+    endScenarioOwnership,
+    scenarioOwnership,
+} from '../support/ScenarioOwnership';
 
 // Cucumber's default per-step timeout is 5 s. An OrangeHRM PIM step combines
 // network latency with several Vue re-renders against a cold SPA, which can
@@ -49,6 +54,8 @@ BeforeAll(async () => {
 // Cast.where is synchronous in Serenity/JS v3, so engagement stays in Before
 // (per scenario) while the async launch lives in BeforeAll (once).
 Before(async () => {
+    beginScenarioOwnership();
+
     for (const context of browser.contexts()) {
         for (const page of context.pages()) {
             await page.evaluate(() => {
@@ -74,6 +81,36 @@ Before(async () => {
             TakeNotes.usingAnEmptyNotepad<ScenarioNotes>(),
         )
     ));
+});
+
+// Delete only identities captured as created by this scenario. Exact pre-delete
+// read-back prevents a stale/misbound empNumber from deleting someone else's
+// record; a management scenario that already deleted its employee is verified as
+// absent. Cleanup runs after failures too and reports every cleanup problem.
+After(async () => {
+    const ownership = scenarioOwnership();
+    const failures: string[] = [];
+
+    for (const employee of ownership.ownedEmployees().reverse()) {
+        try {
+            await OrangeHrm.deleteOwnedEmployee(employee);
+        } catch (error) {
+            failures.push(error instanceof Error ? error.message : String(error));
+        }
+    }
+
+    for (const user of ownership.ownedUsers()) {
+        try {
+            await OrangeHrm.verifyOwnedUserInactive(user);
+        } catch (error) {
+            failures.push(error instanceof Error ? error.message : String(error));
+        }
+    }
+
+    endScenarioOwnership();
+    if (failures.length > 0) {
+        throw new Error(`Scenario-owned cleanup failed:\n- ${failures.join('\n- ')}`);
+    }
 });
 
 AfterAll(async () => {

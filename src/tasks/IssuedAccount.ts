@@ -4,6 +4,7 @@ import { OrangeHrm } from '../api/OrangeHrmApiClient';
 import { LoginPage } from '../interactions/LoginPage';
 import { TopBar } from '../interactions/TopBar';
 import { ScenarioNotes } from '../support/ScenarioNotes';
+import { scenarioOwnership } from '../support/ScenarioOwnership';
 
 const RENDER = Duration.ofSeconds(15);
 
@@ -14,7 +15,8 @@ export const IssuedAccount = {
             const firstName = await actor.answer(notes<ScenarioNotes>().get('issuedEmployeeFirstName'));
             const lastName = await actor.answer(notes<ScenarioNotes>().get('issuedEmployeeLastName'));
 
-            await OrangeHrm.verifyEnabledUserForEmployee(username, firstName, lastName);
+            const identity = await OrangeHrm.verifyEnabledUserForEmployee(username, firstName, lastName);
+            scenarioOwnership().ownUser(identity);
         }),
 
     signIn: () =>

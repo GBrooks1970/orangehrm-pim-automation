@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "cucumber-js --profile default --tags \"not @deferred\"",
-    "test:unit": "node --require ts-node/register --test tests/unit/api-policy.test.ts tests/unit/employee-fixture-client.test.ts tests/unit/readiness.test.ts",
+    "test:unit": "node --require ts-node/register --test tests/unit/api-policy.test.ts tests/unit/employee-fixture-client.test.ts tests/unit/readiness.test.ts tests/unit/scenario-ownership.test.ts",
     "test:api-contract": "node --require ts-node/register --test tests/contract/employee-fixture.contract.ts",
     "test:readiness": "ts-node scripts/verify-orangehrm-readiness.ts",
     "test:smoke:local": "cucumber-js --profile smoke",

@@ -7,18 +7,21 @@ import { EditPersonalDetails } from '../tasks/EditPersonalDetails';
 import { DeleteEmployee } from '../tasks/DeleteEmployee';
 import { EmployeeListRows } from '../questions/EmployeeListRows';
 import { PersonalDetails } from '../questions/PersonalDetails';
+import { scenarioOwnership } from '../support/ScenarioOwnership';
 
 const SETTLE = Duration.ofSeconds(15);
 
 When('I search the employee list for {string}', async (term: string) => {
+    const physicalTerm = scenarioOwnership().resolveEmployeeName(term);
     await actorCalled('User').attemptsTo(
-        SearchForEmployee.selecting(term),
+        SearchForEmployee.selecting(physicalTerm),
     );
 });
 
 When('I open the record for {string}', async (name: string) => {
+    const physicalName = scenarioOwnership().resolveEmployeeName(name);
     await actorCalled('User').attemptsTo(
-        OpenEmployeeRecord.named(name),
+        OpenEmployeeRecord.named(physicalName),
     );
 });
 
@@ -37,15 +40,17 @@ Then('the employee record should show the nationality {string}', async (value: s
 });
 
 When('I delete the employee {string}', async (name: string) => {
+    const physicalName = scenarioOwnership().resolveEmployeeName(name);
     await actorCalled('User').attemptsTo(
-        DeleteEmployee.named(name),
+        DeleteEmployee.named(physicalName),
     );
 });
 
 // Assert the settled, post-delete state: re-search and confirm the row is gone.
 Then('the employee {string} should not appear in the employee list', async (name: string) => {
+    const physicalName = scenarioOwnership().resolveEmployeeName(name);
     await actorCalled('User').attemptsTo(
-        SearchForEmployee.byNameText(name),
-        Wait.upTo(SETTLE).until(EmployeeListRows.matching(name), not(isPresent())),
+        SearchForEmployee.byNameText(physicalName),
+        Wait.upTo(SETTLE).until(EmployeeListRows.matching(physicalName), not(isPresent())),
     );
 });
