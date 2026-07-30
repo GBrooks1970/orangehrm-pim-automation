@@ -3,22 +3,30 @@
 The suite asserts against a controllable OrangeHRM target (ADR-0002). This note records which
 image was chosen to provide it, the alternatives weighed, and why.
 
-## Chosen: `orangehrm/orangehrm:5.8.1`
+## Chosen compatibility baseline and immutable identities
 
-The official OrangeHRM image, pinned to the current stable Open Source release.
+The suite deliberately retains the OrangeHRM 5.8.1 application and its seeded schema, paired
+with the latest exact patch on the repository's MySQL 8.0 compatibility line. On 29 July 2026,
+both references were resolved and executed as Linux/amd64, the GitHub-hosted runner architecture:
 
-As of 6 April 2026 the `5.8.1` tag and `latest` share the same digest
-(`sha256:5eb278ac…`), so this is the newest published build; pinning the exact patch keeps
-runs deterministic when `latest` later moves. It pairs with an external `mysql:8.0` service in
-`docker-compose.yml`.
+| Service | Readable tag in Compose | Immutable Linux/amd64 manifest | Reviewed source and evidence |
+|---|---|---|---|
+| Database | `mysql:8.0.46` | `sha256:62fb722c78b24245ddff1796a0fcee4a49cc5b87e0aaaf20c92d1da9e0a2497b` | [Docker Official Image tags](https://hub.docker.com/_/mysql/tags?name=8.0.46); manifest annotation points to [`docker-library/mysql` revision `7cf11d5`](https://github.com/docker-library/mysql/tree/7cf11d5360282effadb347353d5f82339506b106/8.0); the pulled binary reports `MySQL Community Server 8.0.46` on `x86_64`. |
+| Application | `orangehrm/orangehrm:5.8.1` | `sha256:5eb278acc6280c9a3144b2868230abe48b5bc5892fe00d07c7ec3028e86638e7` | [OrangeHRM Docker Hub tag](https://hub.docker.com/r/orangehrm/orangehrm/tags?name=5.8.1) and [upstream 5.8.1 release](https://github.com/orangehrm/orangehrm/releases/tag/v5.8.1); the pulled image reports Linux/amd64 and PHP 8.3.30. |
+
+Compose keeps each readable tag beside its reviewed manifest digest and declares
+`platform: linux/amd64`. The digest controls the bytes; the tag communicates the intended
+version to reviewers. A tag move cannot change a run, and a future image review becomes a
+visible repository diff.
 
 ### Why this one
 
 - **It is the version the journey targets.** OrangeHRM 5.x is the Vue single-page application
   with REST API v2 and `/web/index.php/...` routes. The scaffold's architecture (async waits,
   API-driven setup) assumes exactly that. The 4.x and 3.x images are a different application.
-- **It matches the reference points.** The live demo and the current GitHub release are both
-  5.8.1, so the local target mirrors what a reviewer sees on the public demo.
+- **It preserves the reviewed functional baseline.** The seed, login contract, REST API v2
+  helpers, and all seven journeys were built against 5.8.1. Moving the SUT is a deliberate
+  compatibility exercise, not an incidental consequence of pulling a mutable tag.
 - **It is the official image.** Published by OrangeHRM, tracking their releases, GPL-licensed,
   no third-party repackaging to trust.
 - **Determinism.** Pinning `5.8.1` rather than `latest` fixes the version under test, which is
@@ -33,7 +41,8 @@ These two points are confirmed from the image's
 
 - **The database is a separate image.** The official image is the PHP/Apache application only
   (around 195 MB) with the `pdo_mysql` client extension; it bundles no database. A separate
-  MySQL (or MariaDB) container hosts the data. `docker-compose.yml` pairs it with `mysql:8.0`.
+  MySQL (or MariaDB) container hosts the data. `docker-compose.yml` pairs it with the reviewed
+  MySQL 8.0.46 Linux/amd64 manifest.
 - **No unattended install, and the admin user is not auto-created.** The Dockerfile adds no
   entrypoint and the image does not read database environment variables. On first boot the app
   serves the web installer wizard, where the database connection and the admin account are
@@ -48,8 +57,8 @@ These two points are confirmed from the image's
 
 - **Pro:** always the newest build; nothing to bump.
 - **Con:** a moving tag. A portfolio suite that claims to be non-flaky cannot have its SUT
-  change underneath it without notice. Rejected for determinism. Today it equals `5.8.1`
-  anyway, so pinning loses nothing now and protects against drift later.
+  change underneath it without notice. Rejected for determinism; compatibility moves require
+  an explicit reviewed tag-and-digest diff and the complete update procedure below.
 
 ### Older official tags (`5.7`, `5.6.x`, down to `5.0`)
 
@@ -140,10 +149,50 @@ ephemeral volume (or recreate it per run) so the init script fires each time.
 This mirrors the Magento reference's bake-then-run pattern: do the slow install once, snapshot
 it, and restore the snapshot on every run.
 
+## Reviewing an image update
+
+Never edit a tag or digest in isolation. A reviewer updating either service must:
+
+1. Select an exact patch from the image's upstream release information and Docker Hub page.
+   For OrangeHRM, also confirm the supported PHP/MySQL range and assess whether the committed
+   seed and `Conf.php` need re-baking.
+2. Resolve the Linux/amd64 manifest from the registry, for example:
+
+   ```bash
+   docker buildx imagetools inspect mysql:<exact-patch>
+   docker buildx imagetools inspect orangehrm/orangehrm:<exact-patch>
+   ```
+
+   Record the full architecture manifest digest, upstream source/revision where exposed, review
+   date, and readable tag in this document and next to the Compose reference.
+3. Pull the exact `tag@sha256:...` reference, inspect its OS/architecture, and execute a version
+   command where the image provides one. Confirm `docker compose config --quiet` resolves the
+   paired readable tag, digest, and `linux/amd64` platform.
+4. Recreate **only this project's** stack and volumes so an older persistent layer cannot mask
+   incompatibility:
+
+   ```bash
+   docker compose down -v
+   docker compose pull
+   docker compose up -d --wait
+   BASE_URL=http://localhost:8080 npm run test:readiness
+   BASE_URL=http://localhost:8080 npm run test:api-contract
+   npm test
+   npm run test:report
+   docker compose down -v
+   ```
+
+5. Require the restored seed, installed-state readiness, API contract, 7/7 active suite,
+   Serenity render/content, teardown, and PR CI to pass. Record exact versions, manifests,
+   runner architecture, test counts, and report evidence in the PR and backlog outcome.
+
+If any compatibility gate fails, restore the last reviewed pair rather than changing the seed,
+application, or test expectations opportunistically. A SUT/schema migration is separate work.
+
 ## Decision
 
-Pin `orangehrm/orangehrm:5.8.1` now for determinism and parity with the demo. Provision it with
-the two-phase flow above: install once to produce `seed.sql`, then restore that dump on every
-run. If maintaining the dump proves awkward, the fallback is to build from the repository
-`Dockerfile` with the seeded database baked in, which closes the gap at the cost of owning a
-small bake step.
+Pin the reviewed Linux/amd64 manifests for MySQL 8.0.46 and OrangeHRM 5.8.1 for deterministic,
+reviewable runs. Provision them with the two-phase flow above: install once to produce
+`seed.sql`, then restore that dump on every run. If maintaining the dump proves awkward, the
+fallback is to build from the repository `Dockerfile` with the seeded database baked in, which
+closes the gap at the cost of owning a small bake step.

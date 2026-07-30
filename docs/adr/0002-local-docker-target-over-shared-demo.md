@@ -45,8 +45,9 @@ until it can prove a genuinely read-only fixture and execution path.
 
 ## Concrete example
 
-`docker-compose.yml` pins `orangehrm/orangehrm:5.8.1` and mounts `db/seed.sql` plus
-`provisioning/Conf.php`, so `docker compose up` restores a known starting state — installed,
+`docker-compose.yml` pins readable MySQL 8.0.46 and OrangeHRM 5.8.1 tags to reviewed immutable
+Linux/amd64 manifests and mounts `db/seed.sql` plus `provisioning/Conf.php`, so
+`docker compose up` restores a known starting state — installed,
 with `Admin / admin123` reaching the dashboard (weak-password enforcement off, mirroring the
 public demo) and one baseline employee. The suite then seeds its own per-scenario employees
 through the API and drives PIM against this controllable target. See `db/README.md` for the

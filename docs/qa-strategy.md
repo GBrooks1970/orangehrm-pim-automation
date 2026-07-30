@@ -122,6 +122,6 @@ npm run test:report
 
 ## 7. Open improvements
 
-Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01–08 are closed; CODEX-09–11 remain open.
+Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01–09 are closed; CODEX-10–11 remain open.
 The local image tag and seeded-database path the suite asserts against (backlog #1) was confirmed
 during the 2026-06-23 build.
