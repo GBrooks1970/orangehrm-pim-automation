@@ -9,8 +9,10 @@ hand-rolled pattern, ADR-0001 and the framework choice in the implementation pla
 **Location:** `src/hooks/browser.hooks.ts`
 
 The actor is created on the first `actorCalled('User')` in a scenario. The browser is
-launched once for the whole run in `BeforeAll`. A `Before` hook resets browser state
-(cookies and storage) and engages the actor; `AfterAll` closes the browser.
+launched once for the whole run in `BeforeAll`. A `Before` hook starts a scenario ownership
+registry, resets browser state (cookies and storage), and engages the actor. `After` deletes only
+exact records captured by that registry and verifies captured users are inactive; `AfterAll`
+closes the browser.
 
 ```typescript
 // src/hooks/browser.hooks.ts
@@ -22,6 +24,7 @@ BeforeAll(async () => {
 });
 
 Before(async () => {
+    beginScenarioOwnership();
     // reset cookies + storage on the reused context so login and search state
     // do not leak across scenarios
     engage(Cast.where(actor =>
@@ -30,6 +33,13 @@ Before(async () => {
             TakeNotes.usingAnEmptyNotepad<ScenarioNotes>(),
         )
     ));
+});
+
+After(async () => {
+    for (const employee of scenarioOwnership().ownedEmployees().reverse()) {
+        await OrangeHrm.deleteOwnedEmployee(employee); // exact identity guard
+    }
+    endScenarioOwnership();
 });
 
 AfterAll(async () => { await browser.close(); });
@@ -56,9 +66,10 @@ the Screenplay actor model — see [ADR-0003](adr/0003-api-driven-setup.md) for 
 OrangeHRM's REST API v2 authenticates with the logged-in session cookie (and a CSRF token
 on writes); the Open Source edition has no static bearer token. So `OrangeHrm.authenticate()`
 performs the login exchange once in `BeforeAll`, captures the session cookie, and reuses it
-for seed and verify calls. The Background step `Given an employee "X" exists` POSTs to the
-employee endpoint; `the employee should appear in the employee list` is a UI assertion, not
-an API one, because that is the behaviour under test.
+for create, verify, and cleanup calls. The Background step `Given an employee "X" exists` maps
+`X` to a unique physical name, POSTs it to the employee endpoint, and registers the exact returned
+`empNumber`; `the employee should appear in the employee list` resolves the same alias and remains
+a UI assertion because that is the behaviour under test.
 
 ## Interactions, Tasks and Questions
 

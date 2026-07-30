@@ -63,6 +63,50 @@ test('successful create is read back by empNumber and returns the exact identity
     assert.match(calls[2].input, /empNumber=42/);
 });
 
+test('UI-created employee lookup never creates a fallback record', async () => {
+    const { client, calls } = queuedClient(response(200, { data: [] }));
+
+    await assert.rejects(
+        client.requireEmployee('Aurora', 'VegaABC123'),
+        /did not find the exact persisted identity/,
+    );
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].init?.method, undefined);
+});
+
+test('owned cleanup deletes only an exact identity and verifies absence', async () => {
+    const { client, calls } = queuedClient(
+        response(200, { data: [employee] }),
+        response(200, { data: [] }),
+        response(200, { data: [] }),
+    );
+
+    assert.equal(await client.deleteOwnedEmployee(employee), 'deleted');
+    assert.equal(calls.length, 3);
+    assert.equal(calls[1].init?.method, 'DELETE');
+    assert.deepEqual(JSON.parse(String(calls[1].init?.body)), { ids: [42] });
+    assert.match(calls[2].input, /nameOrId=Odis\+Adalwin/);
+});
+
+test('owned cleanup refuses an empNumber whose captured identity no longer matches', async () => {
+    const { client, calls } = queuedClient(
+        response(200, { data: [{ ...employee, firstName: 'Different' }] }),
+    );
+
+    await assert.rejects(
+        client.deleteOwnedEmployee(employee),
+        /refused because the persisted identity no longer matches/,
+    );
+    assert.equal(calls.length, 1);
+});
+
+test('owned cleanup verifies a record already removed by the scenario', async () => {
+    const { client, calls } = queuedClient(response(200, { data: [] }));
+
+    assert.equal(await client.deleteOwnedEmployee(employee), 'already-absent');
+    assert.equal(calls.length, 1);
+});
+
 test('expected duplicate response succeeds only after exact-id read-back', async () => {
     const { client, calls } = queuedClient(
         response(200, { data: [] }),

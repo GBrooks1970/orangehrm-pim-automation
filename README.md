@@ -65,13 +65,15 @@ npm run test:report
 The suite resolves its target from `BASE_URL` (defaults to `http://localhost:8080`, the
 local Dockerised OrangeHRM). A fail-fast hook rejects public, shared, malformed, and other
 non-loopback targets before launching Chromium or authenticating. The smoke profile remains
-local-only because its selected search scenario can create a missing employee in its Background.
+local-only because its selected search scenario creates and later removes an employee in its Background.
 See `docs/architecture.md` for the full picture and
 `docs/implementation-plan.md` for the historical build order (the suite has been green since
 2026-06-23).
 
-**Periodic local reset.** A long-lived local Docker volume accumulates state across runs
-(created/edited/deleted employees). Reset to the seeded baseline with:
+**Scenario cleanup and recovery.** Each scenario allocates collision-resistant employee/account
+identities, captures the exact created records, and deletes only those owned records in `After`.
+Repeated runs can therefore share a long-lived local Docker volume without growing test data or
+passing against an earlier record. To recover from an interrupted run or reset to the seed:
 
 ```bash
 docker compose down -v && docker compose up -d --wait   # wipes both volumes, restores seed
@@ -88,7 +90,8 @@ Implemented and green. All 7 active scenarios pass against the local Dockerised 
 (`npm test` → 7/7, deterministic across re-runs), covering add-employee (with and without
 login details), search, update nationality, delete, and the missing-last-name and duplicate-id
 validations. Provisioning is automated (`docker compose up` restores the seeded target and
-boots installed); CI runs the fast lower-level lane before browser/Docker setup, then requires
+boots installed); scenario-owned records are removed after both passing and failing cases. CI runs
+the fast lower-level lane before browser/Docker setup, then requires
 the bounded installed-login/authenticated-API readiness gate before warm-up, the employee fixture
 contract, or Cucumber. It then publishes the Serenity living documentation. See
 `docs/implementation-plan.md` and `db/README.md`.

@@ -13,6 +13,7 @@ import {
     type EmployeeRecordIdentity,
     type RequestedEmployeeIdentity,
 } from './OrangeHrmApiPolicy';
+import type { ScenarioUserIdentity } from '../support/ScenarioOwnership';
 
 /**
  * Thin client over OrangeHRM's session-authenticated REST API v2, used to
@@ -47,6 +48,7 @@ export interface NewEmployee {
 export type SeededEmployee = EmployeeRecordIdentity;
 
 interface SystemUser {
+    id: number;
     userName: string;
     deleted: boolean;
     status: boolean;
@@ -61,6 +63,33 @@ let session: Cookie | undefined;
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 type UrlBuilder = (path: string) => string;
+
+const systemUsersFor = async (username: string, operation: string): Promise<SystemUser[]> => {
+    if (!session) {
+        throw new Error(`${operation} requires an authenticated OrangeHRM session.`);
+    }
+    const query = new URLSearchParams({ username, limit: '50' });
+    const response = await fetch(webUrl(`api/v2/admin/users?${query.toString()}`), {
+        headers: { Cookie: `${session.name}=${session.value}` },
+    });
+    const detail = await response.text();
+    if (!response.ok) {
+        throw new Error(`${operation} failed (HTTP ${response.status}): ${detail}`);
+    }
+
+    try {
+        const payload = JSON.parse(detail) as { data?: unknown };
+        if (!Array.isArray(payload.data)) {
+            throw new Error('response data is not a system-user array');
+        }
+        return payload.data as SystemUser[];
+    } catch (error) {
+        throw new Error(
+            `${operation} returned malformed system-user data: ` +
+            `${error instanceof Error ? error.message : String(error)}`,
+        );
+    }
+};
 
 /**
  * Testable employee-fixture boundary. Transport and URL construction are
@@ -108,11 +137,10 @@ export class EmployeeFixtureClient {
         }
     }
 
-    private async lookupEmployee(
+    private async getEmployees(
         parameters: Record<string, string>,
-        requested: RequestedEmployeeIdentity,
         operation: string,
-    ): Promise<EmployeeLookupDecision> {
+    ): Promise<SeededEmployee[]> {
         const query = new URLSearchParams({ ...parameters, limit: '50' });
         const response = await this.fetchImpl(
             this.urlFor(`api/v2/pim/employees?${query.toString()}`),
@@ -124,9 +152,17 @@ export class EmployeeFixtureClient {
             throw new Error(`${operation} failed (HTTP ${response.status}): ${detail}`);
         }
 
+        return this.parseEmployees(detail, operation);
+    }
+
+    private async lookupEmployee(
+        parameters: Record<string, string>,
+        requested: RequestedEmployeeIdentity,
+        operation: string,
+    ): Promise<EmployeeLookupDecision> {
         return classifyEmployeeLookup(
-            response.status,
-            this.parseEmployees(detail, operation),
+            200,
+            await this.getEmployees(parameters, operation),
             requested,
         );
     }
@@ -190,6 +226,64 @@ export class EmployeeFixtureClient {
             employee,
             operation,
         );
+    }
+
+    /** Require an exact UI-created employee without creating a fallback record. */
+    async requireEmployee(firstName: string, lastName: string): Promise<SeededEmployee> {
+        const requested = { firstName, lastName };
+        const operation = `Reading UI-created employee "${firstName} ${lastName}"`;
+        const lookup = await this.lookupEmployee(
+            { nameOrId: `${firstName} ${lastName}` },
+            requested,
+            operation,
+        );
+        if (lookup.kind !== 'found') {
+            throw new Error(`${operation} did not find the exact persisted identity.`);
+        }
+        return lookup.employee;
+    }
+
+    /**
+     * Delete only when empNumber and every captured identity field still match.
+     * An employee already removed by the scenario is a verified no-op.
+     */
+    async deleteOwnedEmployee(employee: SeededEmployee): Promise<'deleted' | 'already-absent'> {
+        const operation = `Cleaning scenario-owned employee ${employee.empNumber}`;
+        const exactName = `${employee.firstName} ${employee.lastName}`;
+        const before = await this.getEmployees(
+            { nameOrId: exactName },
+            `${operation} pre-delete read-back`,
+        );
+        const persisted = before.find(candidate => candidate.empNumber === employee.empNumber);
+        if (!persisted) return 'already-absent';
+        if (!matchesRequestedEmployeeIdentity(persisted, employee)) {
+            throw new Error(
+                `${operation} refused because the persisted identity no longer matches ` +
+                `the scenario-owned record.`,
+            );
+        }
+
+        const response = await this.fetchImpl(this.urlFor('api/v2/pim/employees'), {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                ...this.authHeaders(),
+            },
+            body: JSON.stringify({ ids: [employee.empNumber] }),
+        });
+        const detail = await response.text();
+        if (!response.ok) {
+            throw new Error(`${operation} failed (HTTP ${response.status}): ${detail}`);
+        }
+
+        const after = await this.getEmployees(
+            { nameOrId: exactName },
+            `${operation} post-delete read-back`,
+        );
+        if (after.some(candidate => candidate.empNumber === employee.empNumber)) {
+            throw new Error(`${operation} returned success but the exact employee is still present.`);
+        }
+        return 'deleted';
     }
 
     /** Return the exact named employee, creating and verifying it only when absent. */
@@ -386,6 +480,20 @@ export const OrangeHrm = {
         return new EmployeeFixtureClient(OrangeHrm.sessionCookie()).createEmployee(employee);
     },
 
+    /** Read back an exact UI-created employee; never creates a fallback. */
+    requireEmployee: async (firstName: string, lastName: string): Promise<SeededEmployee> => {
+        return new EmployeeFixtureClient(OrangeHrm.sessionCookie())
+            .requireEmployee(firstName, lastName);
+    },
+
+    /** Delete an exact scenario-owned employee, or verify the UI already did so. */
+    deleteOwnedEmployee: async (
+        employee: SeededEmployee,
+    ): Promise<'deleted' | 'already-absent'> => {
+        return new EmployeeFixtureClient(OrangeHrm.sessionCookie())
+            .deleteOwnedEmployee(employee);
+    },
+
     /**
      * Verify that OrangeHRM persisted an enabled login account and associated it
      * with the employee created by the UI journey.
@@ -394,20 +502,11 @@ export const OrangeHrm = {
         username: string,
         firstName: string,
         lastName: string,
-    ): Promise<void> => {
-        const cookie = OrangeHrm.sessionCookie();
-        const query = new URLSearchParams({ username, limit: '50' });
-        const response = await fetch(webUrl(`api/v2/admin/users?${query.toString()}`), {
-            headers: { Cookie: `${cookie.name}=${cookie.value}` },
-        });
-        if (!response.ok) {
-            throw new Error(
-                `Could not verify issued account "${username}" through the admin API ` +
-                `(HTTP ${response.status}): ${await response.text()}`,
-            );
-        }
-
-        const { data } = (await response.json()) as { data: SystemUser[] };
+    ): Promise<ScenarioUserIdentity> => {
+        const data = await systemUsersFor(
+            username,
+            `Verifying issued account "${username}" through the admin API`,
+        );
         const user = data.find(candidate => candidate.userName.toLowerCase() === username.toLowerCase());
         if (!user) {
             throw new Error(`Issued account "${username}" was not created.`);
@@ -421,15 +520,36 @@ export const OrangeHrm = {
                 `"${user.employee.firstName} ${user.employee.lastName}", expected "${firstName} ${lastName}".`,
             );
         }
+        return {
+            id: user.id,
+            userName: user.userName,
+            employeeEmpNumber: user.employee.empNumber,
+        };
+    },
+
+    /** Prove employee cleanup did not leave the exact issued account active. */
+    verifyOwnedUserInactive: async (identity: ScenarioUserIdentity): Promise<void> => {
+        const data = await systemUsersFor(
+            identity.userName,
+            `Verifying cleanup of scenario-owned user ${identity.id}`,
+        );
+        const exact = data.find(candidate =>
+            candidate.id === identity.id &&
+            candidate.userName.toLowerCase() === identity.userName.toLowerCase() &&
+            candidate.employee.empNumber === identity.employeeEmpNumber,
+        );
+        if (exact && !exact.deleted && exact.status) {
+            throw new Error(
+                `Scenario-owned user ${identity.id} ("${identity.userName}") remains enabled ` +
+                `after employee ${identity.employeeEmpNumber} cleanup.`,
+            );
+        }
     },
 
     /**
-     * Ensure exactly one employee with the given name exists — the precondition
-     * for the management scenarios. Idempotent: a scenario's Background runs once
-     * per scenario, so creating unconditionally would pile up duplicate "Odis
-     * Adalwin" rows across the feature (breaking the delete assertion and pushing
-     * row actions below the fold). Looks the employee up first and only creates one
-     * when absent.
+     * Retained idempotent lookup/create boundary for lower-level contract callers.
+     * Cucumber scenarios allocate unique identities and use createEmployee so a
+     * prior record can never satisfy setup accidentally.
      */
     ensureEmployeeExists: async (firstName: string, lastName: string): Promise<SeededEmployee> => {
         return new EmployeeFixtureClient(OrangeHrm.sessionCookie())
@@ -437,10 +557,9 @@ export const OrangeHrm = {
     },
 
     /**
-     * Ensure an employee with the given Employee Id exists — the precondition for
-     * the duplicate-id validation scenario. It is idempotent only for the same
-     * exact employee: a recognised uniqueness response must be followed by a
-     * matching Employee Id/name read-back before setup succeeds.
+     * Retained exact-id lookup/create boundary for lower-level contract callers.
+     * A recognised uniqueness response must be followed by a matching Employee
+     * Id/name read-back before setup succeeds.
      */
     ensureEmployeeWithId: async (
         employeeId: string,

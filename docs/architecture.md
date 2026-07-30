@@ -42,13 +42,14 @@ Organised by Screenplay layer, one folder each:
 - **Tasks:** `src/tasks/`, composed, intent-named activities.
 - **Questions:** `src/questions/`, state reads.
 - **Hooks:** `src/hooks/browser.hooks.ts`, browser launched once per run; per-scenario
-  state reset and a fresh scenario notepad.
-- **API client:** `src/api/OrangeHrmApiClient.ts`, session-cookie auth plus employee seed
-  and exact employee/account verification against REST API v2.
+  state reset, a fresh scenario notepad, and exact scenario-owned record cleanup.
+- **API client:** `src/api/OrangeHrmApiClient.ts`, session-cookie auth plus employee creation,
+  exact employee/account verification, and ownership-checked deletion against REST API v2.
 - **API policy:** `src/api/OrangeHrmApiPolicy.ts`, pure cookie, lookup, duplicate, and identity
   decisions covered without a running SUT.
-- **Scenario support:** `src/support/ScenarioNotes.ts`, typed scenario-owned identities and
-  masked credentials shared across Screenplay activities.
+- **Scenario support:** `src/support/ScenarioNotes.ts` holds typed notes and masked credentials;
+  `src/support/ScenarioOwnership.ts` maps readable Gherkin values to unique physical identities
+  and retains the exact records created by the scenario.
 - **Config:** `src/serenity.config.ts`, reporter crew only.
 
 ### Tooling
@@ -81,7 +82,7 @@ orangehrm-pim-automation/
 │   │   ├── target-safety.ts            # Pure loopback classification + fail-fast guard
 │   │   └── readiness.ts                # Bounded state-poll policy with deterministic tests
 │   ├── hooks/
-│   │   └── browser.hooks.ts           # Browser once (BeforeAll); state reset + engage (Before)
+│   │   └── browser.hooks.ts           # Browser lifecycle; state reset, ownership, exact cleanup
 │   ├── interactions/                  # PageElements: login, top bar, add form, employee list, personal details
 │   ├── tasks/                         # Login, employee CRUD/search, and issued-account verification/login
 │   ├── questions/                     # Employee list/details, validation messages, current signed-in user
@@ -89,7 +90,8 @@ orangehrm-pim-automation/
 │   │   ├── OrangeHrmApiClient.ts       # REST API v2 — session auth + employee/account verification
 │   │   └── OrangeHrmApiPolicy.ts       # Pure cookie, response and fixture-identity decisions
 │   ├── support/
-│   │   └── ScenarioNotes.ts            # Typed scenario-scoped issued account and employee identity
+│   │   ├── ScenarioNotes.ts            # Typed scenario-scoped issued account and employee identity
+│   │   └── ScenarioOwnership.ts        # Unique aliases + exact scenario-owned employee/user records
 │   ├── actors/                        # Reserved — actor setup via hooks
 │   └── step-definitions/              # Thin Gherkin-to-Task glue
 ├── docs/
@@ -127,25 +129,27 @@ What happens when `npm test` runs:
 1. Cucumber discovers `features/**/*.feature`, skipping `@deferred` (none currently).
 2. `ts-node/register` compiles TypeScript on the fly.
 3. `src/serenity.config.ts` configures the reporter crew.
-4. `src/hooks/browser.hooks.ts` registers `BeforeAll`, `Before`, `AfterAll`.
+4. `src/hooks/browser.hooks.ts` registers `BeforeAll`, `Before`, `After`, `AfterAll`.
 5. Once per run: `BeforeAll` rejects a non-loopback `BASE_URL` before it launches Chromium or
    authenticates the API client, then holds the local admin session cookie for seeding.
 6. After Compose transport health, `test:readiness` rejects the installer/broken configuration
    and proves the installed login plus authenticated PIM API within a strict deadline.
 7. In CI, `test:api-contract` proves the authenticated employee fixture boundary against the
    running local API before Cucumber begins.
-8. Per scenario: `Before` resets browser state and engages the actor with
-   `BrowseTheWebWithPlaywright` plus an empty `TakeNotes` notepad. API setup
-   (authentication, seeding) runs through a dedicated module-level client, deliberately
-   outside the actor model (ADR-0003).
+8. Per scenario: `Before` creates an ownership registry, resets browser state, and engages the
+   actor with `BrowseTheWebWithPlaywright` plus an empty `TakeNotes` notepad. API setup
+   (authentication and unique employee creation) runs through a dedicated module-level client,
+   deliberately outside the actor model (ADR-0003).
 9. Cucumber matches steps to `src/step-definitions/`.
 10. Step definitions call `actorCalled('User').attemptsTo(Task...)` or
    `Ensure.that(Question, matcher)`.
 11. Tasks decompose to Interactions against Playwright.
 12. `Wait.upTo(...).until(element, isVisible())` guards every async Vue transition; the
     default ceiling is too short for a cold SPA, so it is set explicitly.
-13. Once per run: `AfterAll` closes the browser.
-14. The ArtifactArchiver writes Serenity JSON to `docs/reports/`; `npm run test:report`
+13. Per scenario: `After` deletes only exact employee records captured by that registry and
+    verifies any captured user is no longer enabled; already UI-deleted records are accepted.
+14. Once per run: `AfterAll` closes the browser.
+15. The ArtifactArchiver writes Serenity JSON to `docs/reports/`; `npm run test:report`
     renders the HTML living documentation, published by CI.
 
 ## 5. SUT-specific constraints
@@ -160,7 +164,8 @@ What happens when `npm test` runs:
 | Autocomplete search | Wait for the result option to render before selecting | The employee-name search is a debounced async autocomplete | Task-level wait |
 | Data setup | Seed employees through REST API v2, not the UI | UI creation is slow and is the behaviour under test elsewhere | ADR-0003 |
 | Fixture identity | Treat only a successful empty lookup as absent; parse the duplicate validation payload; read back exact Employee Id/name/`empNumber` | HTTP 422 also represents unrelated validation errors, and stale records can satisfy loose lookup logic | `EmployeeFixtureClient`, unit + API contract tests |
-| Shared demo non-determinism | Reject every non-loopback execution target before browser/API setup | The public demo is shared and even the smoke Background can conditionally write | ADR-0002, `target-safety.ts` |
+| Persistent-volume isolation | Generate a unique physical name/Employee Id for every scenario, retain exact created `empNumber` and user id, and delete only after matching the captured identity | Stable human-readable fixtures accumulate and can make a later run pass against earlier data | `ScenarioOwnership`, `After` cleanup, unit + repeated-volume tests |
+| Shared demo non-determinism | Reject every non-loopback execution target before browser/API setup | The public demo is shared and even the smoke Background creates then removes a scenario-owned record | ADR-0002, `target-safety.ts` |
 | Stable assertion | Assert on employee identity (full name + Employee Id), not transient toasts | The post-save success toast is timing-sensitive and disappears; the record and list row are stable | questions, gherkin-style-guide |
 
 The PIM analogue of the Magento "assert the subtotal, never the grand total" rule is:
@@ -170,6 +175,6 @@ row), never the transient success toast that flashes after save.
 ## 6. Known issues and technical debt
 
 The suite has been built to green since 2026-06-23. Open items are tracked in
-`docs/backlog.md` (Items #1–#6 and CODEX-01–09 are closed; CODEX-10–11 remain open); the historical build order is
+`docs/backlog.md` (Items #1–#6 and CODEX-01–10 are closed; CODEX-11 remains open); the historical build order is
 recorded in `docs/implementation-plan.md`. The local image tag and seeded-database path
 (backlog #1) that the whole suite asserts against was confirmed during that build.

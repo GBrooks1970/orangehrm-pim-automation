@@ -29,16 +29,17 @@ read-only UI query. A fail-fast hook rejects every non-loopback target before br
 1. **TypeScript type check:** `npm run typecheck`, zero errors, run immediately after dependency
    installation so static defects fail before browser download or Docker startup.
 2. **Lower-level policy tests:** `npm run test:unit`, deterministic and SUT-independent coverage
-   for session-cookie parsing, loopback safety, API response/duplicate classification, and exact
-   requested fixture identity plus bounded readiness retry/deadline behaviour; run before browser
-   download or Docker startup.
+   for session-cookie parsing, loopback safety, API response/duplicate classification, exact
+   requested fixture identity, scenario ownership/conflict handling, and bounded readiness
+   retry/deadline behaviour; run before browser download or Docker startup.
 3. **Dependency audit:** `npm audit --audit-level=high`, no unaccepted High or Critical finding.
 4. **Target contract:** `npm run test:target-contract`, every profile loads the pre-browser
    loopback guard and representative remote/malformed targets are rejected.
 5. **Installed-application readiness:** `npm run test:readiness`, a bounded state poll that rejects
    installer redirects and requires both the installed login exchange and authenticated PIM API.
 6. **Local employee API contract:** `npm run test:api-contract`, against the running Docker target;
-   creates or reuses one stable fixture and proves its exact Employee Id/name/`empNumber` read-back.
+   creates/reuses one unique fixture, proves its exact Employee Id/name/`empNumber` read-back, and
+   deletes that exact owned record before returning.
 7. **Active suite:** `npm test` (`--tags "not @deferred"`), all pass.
 8. **Living-documentation report:** `npm run test:report`, no generation errors.
 
@@ -68,13 +69,14 @@ never fails a step.
 | Tier | Area | Risk | Mitigation |
 |---|---|---|---|
 | High | Vue SPA async render | Steps fire before the SPA re-renders, causing element-not-found or stale-element errors | Explicit `Wait.until(element, isVisible())` at every transition; zero hard waits |
-| High | Shared-demo mutation/non-determinism | The public demo is shared, and even the smoke Background can create a missing employee | Every profile is loopback-only; a pre-browser guard and static contract test reject remote targets |
+| High | Shared-demo mutation/non-determinism | The public demo is shared, and even the smoke Background creates then removes a scenario-owned employee | Every profile is loopback-only; a pre-browser guard and static contract test reject remote targets |
 | Medium | Login session coupling | An expired or unshared session breaks both UI and API setup | Authenticate once per run; reset browser state per scenario |
 | Medium | False-ready container | Apache can answer while OrangeHRM serves the installer or cannot reach its configured database | Keep Compose health transport-only, then require a bounded installed-login plus authenticated-API probe before warm-up/tests |
 | Medium | Issued-account false positive | Employee creation succeeds but the requested login account is absent, disabled, linked to another employee, or unusable | Retain the generated username in scenario notes, verify the exact enabled association through the admin API, then clear the admin session and sign in as the employee; mask the password in all activities |
 | Medium | Autocomplete debounce | Asserting before the debounced search renders gives a false negative | Wait on the result row before asserting |
 | Medium | Employee Id uniqueness | The duplicate-id case is meaningless if the seeded id did not take | Seed the exact id via API and verify before the UI step |
 | Medium | Fixture API ambiguity | Lookup/auth failures or unrelated validation errors can masquerade as an absent/duplicate fixture | Fail non-OK lookup immediately; accept only the parsed 5.8.1 duplicate signature; read back exact identity |
+| Low | Persistent-volume record leakage | Stable fixture names accumulate or let later scenarios pass against earlier records | Allocate unique physical identities per scenario; capture exact employee/user ids; ownership-check deletion; prove counts stay at baseline across repeated runs |
 | Low | Record vs toast | Asserting on the fading success toast races the UI | Assert on the persisted record and list row |
 
 ### Settled-state assertions
@@ -101,6 +103,11 @@ npx tsc --noEmit
 npm run test:report
 ```
 
+Run the API contract and active suite twice against the same persistent volume when changing
+ownership or cleanup. Employee and enabled-user counts must return to their pre-run baseline after
+each pass. `docker compose down -v` remains the recovery path for records left by an interrupted
+process; it is not required between healthy runs.
+
 ### CI
 
 ```bash
@@ -122,6 +129,6 @@ npm run test:report
 
 ## 7. Open improvements
 
-Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01–09 are closed; CODEX-10–11 remain open.
+Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01–10 are closed; CODEX-11 remains open.
 The local image tag and seeded-database path the suite asserts against (backlog #1) was confirmed
 during the 2026-06-23 build.

@@ -9,36 +9,46 @@ import { PersonalDetails } from '../questions/PersonalDetails';
 import { CurrentUser } from '../questions/CurrentUser';
 import { IssuedAccount } from '../tasks/IssuedAccount';
 import { ScenarioNotes } from '../support/ScenarioNotes';
+import { OrangeHrm } from '../api/OrangeHrmApiClient';
+import { scenarioOwnership } from '../support/ScenarioOwnership';
 
 const SETTLE = Duration.ofSeconds(15);
 
 When('I add an employee named {string} {string}', async (firstName: string, lastName: string) => {
+    const ownership = scenarioOwnership();
+    const physical = ownership.employeeName(firstName, lastName);
     await actorCalled('User').attemptsTo(
-        AddEmployee.named(firstName, lastName),
+        AddEmployee.named(physical.firstName, physical.lastName),
     );
+    ownership.ownEmployee(await OrangeHrm.requireEmployee(physical.firstName, physical.lastName));
 });
 
 When('I add an employee named {string} {string} with login details', async (firstName: string, lastName: string) => {
+    const ownership = scenarioOwnership();
+    const physical = ownership.employeeName(firstName, lastName);
     await actorCalled('User').attemptsTo(
-        AddEmployee.withLoginDetails(firstName, lastName),
+        AddEmployee.withLoginDetails(physical.firstName, physical.lastName),
     );
+    ownership.ownEmployee(await OrangeHrm.requireEmployee(physical.firstName, physical.lastName));
 });
 
 // Shared across add, search and delete: search the list, then assert the row has
 // settled into view (the list can briefly lag a create — docs/qa-strategy.md §5).
 Then('the employee {string} should appear in the employee list', async (name: string) => {
+    const physicalName = scenarioOwnership().resolveEmployeeName(name);
     await actorCalled('User').attemptsTo(
-        SearchForEmployee.selecting(name),
-        Wait.upTo(SETTLE).until(EmployeeListRows.matching(name), isPresent()),
+        SearchForEmployee.selecting(physicalName),
+        Wait.upTo(SETTLE).until(EmployeeListRows.matching(physicalName), isPresent()),
     );
 });
 
 // Assert the persisted name on the record itself, never the success toast: open
 // the saved record and read its name heading.
 Then('the employee record should show the name {string}', async (name: string) => {
+    const physicalName = scenarioOwnership().resolveEmployeeName(name);
     await actorCalled('User').attemptsTo(
-        OpenEmployeeRecord.named(name),
-        Ensure.that(PersonalDetails.name(), equals(name)),
+        OpenEmployeeRecord.named(physicalName),
+        Ensure.that(PersonalDetails.name(), equals(physicalName)),
     );
 });
 

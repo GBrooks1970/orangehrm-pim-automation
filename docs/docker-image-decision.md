@@ -97,7 +97,7 @@ These two points are confirmed from the image's
 - **Pro:** zero provisioning.
 - **Con:** shared, periodically reset, and not guaranteed to accept writes; the reason ADR-0002
   exists. It is retained only as a visual/reference environment, not an executable automation
-  target: every profile is loopback-only because even the smoke Background can conditionally write.
+  target: every profile is loopback-only because even the smoke Background creates and removes data.
 
 ## Provisioning and seeding flow
 

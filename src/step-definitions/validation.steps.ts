@@ -5,6 +5,7 @@ import { isVisible } from '@serenity-js/web';
 import { AddEmployee } from '../tasks/AddEmployee';
 import { AddEmployeePage } from '../interactions/AddEmployeePage';
 import { ValidationMessage } from '../questions/ValidationMessage';
+import { scenarioOwnership } from '../support/ScenarioOwnership';
 
 const SETTLE = Duration.ofSeconds(15);
 
@@ -17,7 +18,11 @@ When('I try to add an employee with first name {string} and no last name', async
 When('I try to add an employee named {string} {string} with employee id {string}',
     async (firstName: string, lastName: string, employeeId: string) => {
         await actorCalled('User').attemptsTo(
-            AddEmployee.withDuplicateEmployeeId(firstName, lastName, employeeId),
+            AddEmployee.withDuplicateEmployeeId(
+                firstName,
+                lastName,
+                scenarioOwnership().resolveEmployeeId(employeeId),
+            ),
         );
     });
 

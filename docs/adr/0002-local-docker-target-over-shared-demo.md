@@ -52,4 +52,5 @@ with `Admin / admin123` reaching the dashboard (weak-password enforcement off, m
 public demo) and one baseline employee. The suite then seeds its own per-scenario employees
 through the API and drives PIM against this controllable target. See `db/README.md` for the
 seed-once / restore-many flow. The search scenario's `an employee exists` Background uses that
-same API client and can create data, which is why its `smoke` selection remains local-only.
+same API client to create a unique record and the `After` hook removes the exact owned identity;
+the mutation is why its `smoke` selection remains local-only.
