@@ -22,7 +22,7 @@ visible repository diff.
 ### Why this one
 
 - **It is the version the journey targets.** OrangeHRM 5.x is the Vue single-page application
-  with REST API v2 and `/web/index.php/...` routes. The scaffold's architecture (async waits,
+  with REST API v2 and `/web/index.php/...` routes. The suite architecture (async waits,
   API-driven setup) assumes exactly that. The 4.x and 3.x images are a different application.
 - **It preserves the reviewed functional baseline.** The seed, login contract, REST API v2
   helpers, and all seven journeys were built against 5.8.1. Moving the SUT is a deliberate
@@ -49,7 +49,7 @@ These two points are confirmed from the image's
   entered by hand. A vanilla install does **not** create the demo's `Admin / admin123` user;
   that credential is seeded only on the public demo. To match it, set `Admin / admin123` during
   the installer, then snapshot the resulting database and restore that dump in CI for a known
-  starting state. This is the one open item (backlog #1).
+  starting state. Backlog #1 closed when that snapshot and `Conf.php` were committed and mounted.
 
 ## Alternatives considered
 
@@ -79,9 +79,9 @@ These two points are confirmed from the image's
 
 - **Pro:** full control; the natural place to bake a pre-seeded database and a fixed admin
   credential, which would close the installer gap cleanly.
-- **Con:** more to build and maintain, slower cold start, and a bake pipeline to own. Worth
-  revisiting if the installer automation proves awkward; for a scaffold, the published image is
-  the faster path to a green suite.
+- **Con:** more to build and maintain, slower cold start, and a bake pipeline to own. The current
+  official-image plus committed seed/`Conf.php` flow is already automated, so there is no present
+  benefit that justifies owning another image.
 
 ### Third-party images (for example a Bitnami-style packaging)
 
@@ -125,17 +125,18 @@ This happens once. The installer is never part of a test run. The captured `Conf
 lets the app boot already installed on a fresh start (a clean CI runner has an empty app
 volume and would otherwise re-run the installer despite a populated database).
 
-### Phase B — run many (every run, automated)
+### Phase B — run many (automated; fresh CI or persistent local volume)
 
 1. `docker compose up --wait`: MySQL starts and restores `seed.sql`; Compose proves database and
    Apache transport health, not application installation.
 2. `npm run test:readiness` polls to a strict deadline, rejects any installer redirect, completes
    the `Admin / admin123` login exchange, and requires a valid authenticated PIM API response.
-3. Only after readiness passes, warm the cold pages. The suite then authenticates, seeds its
-   per-test employees through REST API v2, and drives PIM
-   through the UI.
-4. Tear down: discard the database so the next run restores the same `seed.sql` and starts from
-   the same known state.
+3. Only after readiness passes, warm the cold pages. The suite then authenticates, creates unique
+   scenario-owned employees through REST API v2 or the UI, drives PIM through the UI, and removes
+   each exact captured record in `After`.
+4. CI tears down with `docker compose down -v`, so its next run restores the same seed. Healthy
+   local runs may retain the stack and volume because scenario cleanup returns data to baseline;
+   `down -v` remains recovery for an interrupted run.
 
 For a negative proof, set `ORANGEHRM_CONF_PATH=./tests/fixtures/invalid-Conf.php`, recreate the
 web service, and run the readiness command with a short timeout. Apache still becomes healthy,
@@ -143,11 +144,11 @@ but readiness fails on the login surface before warm-up or Cucumber. Restore the
 and recreate `web` afterwards.
 
 The MySQL service restores `seed.sql` by mounting it into `/docker-entrypoint-initdb.d/`, which
-the official MySQL image runs on first start of an empty data directory. Keep the database on an
-ephemeral volume (or recreate it per run) so the init script fires each time.
+the official MySQL image runs on first start of an empty data directory. CI recreates that volume;
+a persistent local volume restores once and remains valid because healthy scenarios self-clean.
 
-This mirrors the Magento reference's bake-then-run pattern: do the slow install once, snapshot
-it, and restore the snapshot on every run.
+This follows a bake-then-run pattern: do the slow install once, snapshot it, and restore that
+snapshot whenever a clean volume is created. Scenario cleanup keeps a healthy local volume reusable.
 
 ## Reviewing an image update
 
@@ -193,6 +194,6 @@ application, or test expectations opportunistically. A SUT/schema migration is s
 
 Pin the reviewed Linux/amd64 manifests for MySQL 8.0.46 and OrangeHRM 5.8.1 for deterministic,
 reviewable runs. Provision them with the two-phase flow above: install once to produce
-`seed.sql`, then restore that dump on every run. If maintaining the dump proves awkward, the
-fallback is to build from the repository `Dockerfile` with the seeded database baked in, which
-closes the gap at the cost of owning a small bake step.
+`seed.sql`, then restore that dump for every clean volume (including each CI run). If maintaining the dump proves awkward, the
+fallback is to build from the repository `Dockerfile` with the seeded database baked in, at the
+cost of owning a separate bake step.

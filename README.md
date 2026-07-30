@@ -37,7 +37,7 @@ npm test
 # Run the fast SUT-independent API-policy and target-safety tests
 npm run test:unit
 
-# With the local stack running, verify employee create/reuse/read-back semantics
+# With the local stack running, verify unique employee create/reuse/read-back/cleanup semantics
 BASE_URL=http://localhost:8080 npm run test:api-contract
 
 # Prove the installed login and authenticated PIM API are ready
@@ -49,6 +49,9 @@ npm run test:smoke:local
 # Verify that every profile loads the loopback guard
 npm run test:target-contract
 
+# Verify 7/1 scenario counts, CI command declarations/order, image/report contracts, and links
+npm run test:project-contract
+
 # Audit the locked development/test toolchain
 npm audit --audit-level=high
 
@@ -56,7 +59,7 @@ npm audit --audit-level=high
 HEADLESS=false npm test
 
 # Type check only
-npx tsc --noEmit
+npm run typecheck
 
 # Generate the Serenity living-documentation report from the last run
 npm run test:report
@@ -90,8 +93,8 @@ Implemented and green. All 7 active scenarios pass against the local Dockerised 
 (`npm test` → 7/7, deterministic across re-runs), covering add-employee (with and without
 login details), search, update nationality, delete, and the missing-last-name and duplicate-id
 validations. Provisioning is automated (`docker compose up` restores the seeded target and
-boots installed); scenario-owned records are removed after both passing and failing cases. CI runs
-the fast lower-level lane before browser/Docker setup, then requires
+boots installed); captured scenario-owned records are removed after both passing and failing
+cases. CI runs the fast lower-level and project-contract lanes before browser/Docker setup, then requires
 the bounded installed-login/authenticated-API readiness gate before warm-up, the employee fixture
 contract, or Cucumber. It then publishes the Serenity living documentation. See
 `docs/implementation-plan.md` and `db/README.md`.

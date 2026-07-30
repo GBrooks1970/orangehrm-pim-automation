@@ -85,9 +85,10 @@ Interactions. When OrangeHRM restyles the form, only an Interaction changes.
 when the SPA is ready sooner, too flaky when it is not. They vanish in the `after`; waiting is
 `Wait.until(element, isVisible())` inside the Tasks. A feature file never mentions time.
 
-**Login and setup belong in the Background, through the API.** The `before` logs in by
+**Login and setup belong in the Background, through the API boundary.** The `before` logs in by
 clicking, incidental detail that breaks whenever the login page changes. The `after` declares
-`I am logged in as an HR administrator` once and the API ability arranges the session.
+`I am logged in as an HR administrator` once; the module-level API client authenticates and
+`LogInAsAdmin` injects that session cookie into the browser.
 
 **Assert the persisted record, not the toast.** The `before` checks `Successfully Saved`, a
 toast that fades and races the assertion. The `after` asserts the employee appears in the

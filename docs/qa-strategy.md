@@ -20,9 +20,10 @@
 
 **Active scenarios:** 7. **Deferred:** 0.
 **Local smoke subset** (`smoke` profile, `not @deferred and not @changesState and not @localOnly
-and not @seedsData`): exactly 1 scenario — employee search. Its feature Background can
-conditionally create the employee through the API, so the profile is local-only despite the
-read-only UI query. A fail-fast hook rejects every non-loopback target before browser/API setup.
+and not @seedsData`): exactly 1 scenario — employee search. Its feature Background creates a
+unique employee through the API and `After` removes the exact owned record, so the profile is
+local-only despite the read-only UI query. A fail-fast hook rejects every non-loopback target
+before browser/API setup.
 
 ## 3. Automation gates
 
@@ -35,19 +36,22 @@ read-only UI query. A fail-fast hook rejects every non-loopback target before br
 3. **Dependency audit:** `npm audit --audit-level=high`, no unaccepted High or Critical finding.
 4. **Target contract:** `npm run test:target-contract`, every profile loads the pre-browser
    loopback guard and representative remote/malformed targets are rejected.
-5. **Installed-application readiness:** `npm run test:readiness`, a bounded state poll that rejects
+5. **Project contract:** `npm run test:project-contract`, real default/smoke dry-runs enforce the
+   exact 7/1 counts; package/CI commands and their order, Node/image/report contracts, the
+   historical-plan marker, and relative Markdown links are checked before browser installation.
+6. **Installed-application readiness:** `npm run test:readiness`, a bounded state poll that rejects
    installer redirects and requires both the installed login exchange and authenticated PIM API.
-6. **Local employee API contract:** `npm run test:api-contract`, against the running Docker target;
+7. **Local employee API contract:** `npm run test:api-contract`, against the running Docker target;
    creates/reuses one unique fixture, proves its exact Employee Id/name/`empNumber` read-back, and
    deletes that exact owned record before returning.
-7. **Active suite:** `npm test` (`--tags "not @deferred"`), all pass.
-8. **Living-documentation report:** `npm run test:report`, no generation errors.
+8. **Active suite:** `npm test` (`--tags "not @deferred"`), all pass.
+9. **Living-documentation report:** `npm run test:report`, no generation errors.
 
 The `e2e` workflow enforces the TypeScript, lower-level, High-severity audit, target-contract,
-installed-readiness, local API contract, active-suite, and report gates on every push to `main`
+project-contract, installed-readiness, local API contract, active-suite, and report gates on every push to `main`
 and every pull request against local Dockerised OrangeHRM.
-The cheap TypeScript and lower-level gates run immediately after `npm ci`, before browser or
-Docker setup.
+The cheap TypeScript, lower-level, audit, target, and project-contract gates run immediately
+after `npm ci`, before browser or Docker setup.
 
 ## 4. Metrics and reporting
 
@@ -93,6 +97,7 @@ first render after the mutation.
 npm install
 npm run test:unit                           # fast; no SUT or browser required
 npm run test:target-contract                 # no SUT; verifies every profile's loopback guard
+npm run test:project-contract                # no SUT/browser; verifies counts, CI/docs and links
 BASE_URL=http://localhost:8080 npm run test:readiness     # bounded installed-app gate
 BASE_URL=http://localhost:8080 npm run test:api-contract  # requires the local stack
 npm test                                   # full active suite
@@ -111,24 +116,35 @@ process; it is not required between healthy runs.
 ### CI
 
 ```bash
-# 1. Start the stack; block on DB and Apache transport health
+# 1. Fail cheaply before browser installation or Docker
+npm ci
+npm run typecheck
+npm run test:unit
+npm audit --audit-level=high
+npm run test:target-contract
+npm run test:project-contract
+
+# 2. Install Chromium, then block on DB and Apache transport health
+npx playwright install --with-deps chromium
 docker compose up -d --wait
 
-# 2. Reject installer/broken Conf.php and prove authenticated API readiness
+# 3. Reject installer/broken Conf.php and prove authenticated API readiness
 BASE_URL=http://localhost:8080 npm run test:readiness
 
-# 3. Warm up the cold SPA outside any assertion
+# 4. Warm up the cold SPA outside any assertion
 curl -sf http://localhost:8080/web/index.php/auth/login -o /dev/null
 
-# 4. Run the active suite against the local target
+# 5. Prove the fixture boundary, then run the active suite
+BASE_URL=http://localhost:8080 npm run test:api-contract
 BASE_URL=http://localhost:8080 npm test
 
-# 5. Render the report and publish (main only)
+# 6. Require non-empty scenario JSON, render, upload, deploy from main, and tear down
 npm run test:report
+docker compose down -v
 ```
 
-## 7. Open improvements
+## 7. Backlog status
 
-Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01–10 are closed; CODEX-11 remains open.
+Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01–12 are closed; CODEX-13 remains open.
 The local image tag and seeded-database path the suite asserts against (backlog #1) was confirmed
 during the 2026-06-23 build.

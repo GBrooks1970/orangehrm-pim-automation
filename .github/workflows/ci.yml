@@ -43,6 +43,9 @@ jobs:
       - name: Verify local-only target contract
         run: npm run test:target-contract
 
+      - name: Verify project documentation and CI contract
+        run: npm run test:project-contract
+
       # Playwright's Chromium is not bundled with the npm package; install the
       # browser (and its OS libraries) the suite drives.
       - name: Install Playwright Chromium

@@ -14,6 +14,7 @@
     "test:readiness": "ts-node scripts/verify-orangehrm-readiness.ts",
     "test:smoke:local": "cucumber-js --profile smoke",
     "test:target-contract": "ts-node scripts/verify-local-target-contract.ts",
+    "test:project-contract": "ts-node scripts/verify-project-contract.ts",
     "test:report": "serenity-bdd run --source ./docs/reports --features ./features",
     "typecheck": "tsc --noEmit"
   },
