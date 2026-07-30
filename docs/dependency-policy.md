@@ -15,10 +15,31 @@ they are not dismissed solely because the packages are development dependencies.
   required by `@serenity-js/playwright` rather than updating the browser driver independently.
 - Use the Node major declared by `package.json`, `.nvmrc`, and CI. A framework engine-floor change
   must update all three in the same PR.
-- Dependabot holds TypeScript below 7 while `ts-node` 10.9.2 and the CommonJS configuration remain
+- Dependabot holds TypeScript below 6 while `ts-node` 10.9.2 and the CommonJS configuration remain
   incompatible, `@types/node` on the Node 24 line, and Playwright on the 1.61 line required by
   Serenity/JS 3.44.1. Remove a hold only in the aligned toolchain PR that proves the replacement
   runtime/compiler or Serenity peer range through the full verification below.
+
+### TypeScript compatibility hold
+
+Dependabot PR [#23](https://github.com/GBrooks1970/orangehrm-pim-automation/pull/23)
+proposed TypeScript 6.0.3. Its CI run
+[30411439521](https://github.com/GBrooks1970/orangehrm-pim-automation/actions/runs/30411439521)
+failed in the early `npm run typecheck` gate with TS5107: this configuration's
+`moduleResolution: "node"` resolves to deprecated `node10`, which TypeScript 6 requires callers
+to migrate and TypeScript 7 will remove. The failure occurred before browser installation or
+Docker, so it is a compiler/runtime compatibility result rather than an E2E failure.
+
+Do not accept the suggested `ignoreDeprecations: "6.0"` as the fix: it would suppress the
+migration signal while retaining a resolution mode scheduled to stop functioning. Release the
+`>=6.0.0` Dependabot hold only in one aligned toolchain change that:
+
+1. upgrades or replaces the `ts-node` 10/CommonJS execution path with a loader/runtime that
+   explicitly supports the target TypeScript major;
+2. migrates `module` and `moduleResolution` together to a supported pairing without a suppression;
+3. keeps Cucumber step/hook discovery and Serenity reporting operational under Node 24; and
+4. passes typecheck, unit/target/project contracts, exact 7/1 dry-run discovery, the clean Docker
+   7/7 suite, non-empty Serenity report generation/upload, teardown, and live PR CI.
 
 ## Audit policy
 

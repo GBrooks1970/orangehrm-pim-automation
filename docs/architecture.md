@@ -180,7 +180,7 @@ row), never the transient success toast that flashes after save.
 
 ## 6. Known issues and technical debt
 
-The suite has been built to green since 2026-06-23. Open items are tracked in
-`docs/backlog.md` (Items #1–#6 and CODEX-01–12 are closed; CODEX-13 remains open); the historical build order is
+The suite has been built to green since 2026-06-23. All items in `docs/backlog.md` are closed
+(Items #1–#6 and CODEX-01–13); the historical build order is
 recorded in `docs/implementation-plan.md`. The local image tag and seeded-database path
 (backlog #1) that the whole suite asserts against was confirmed during that build.

@@ -11,10 +11,12 @@ updates:
           - "@serenity-js/*"
           - playwright
     ignore:
-      # ts-node 10.9.2 crashes while loading this CommonJS project with TypeScript 7.
+      # TypeScript 6 already fails this ts-node/CommonJS project at TS5107 because
+      # moduleResolution=node resolves to deprecated node10; TypeScript 7 removes
+      # that path. See docs/dependency-policy.md and closed Dependabot PR #23.
       - dependency-name: typescript
         versions:
-          - ">=7.0.0"
+          - ">=6.0.0"
       # Keep runtime declarations aligned with the repository's Node 24 contract.
       - dependency-name: "@types/node"
         versions:
