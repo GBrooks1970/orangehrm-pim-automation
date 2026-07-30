@@ -2,7 +2,8 @@
 
 The suite asserts against a controllable local OrangeHRM (ADR-0002,
 `docs/docker-image-decision.md`). Provisioning is two-phase: **seed once** (Phase A,
-one-off), then **restore many** (Phase B, every run).
+one-off), then **restore on each clean volume** (Phase B). CI creates a clean volume every run;
+healthy local runs can reuse one because scenario-owned records self-clean.
 
 Compose uses the reviewed Linux/amd64 manifests for MySQL 8.0.46 and OrangeHRM 5.8.1.
 Do not update only a readable tag or only a digest: follow the paired review and clean-volume
@@ -16,8 +17,9 @@ compatibility procedure in `docs/docker-image-decision.md`.
 | `provisioning/Conf.php` | The `lib/confs/Conf.php` the installer wrote, pointing OrangeHRM at the `db` service. Mounted into the web container so the app boots **already installed** on any fresh start — including a clean CI runner, where the app volume is empty and the app would otherwise re-run the installer despite a populated database. |
 
 With both mounted (see `docker-compose.yml`), `docker compose up` restores the intended installed
-state. Do not infer that state from Apache health alone: `npm run test:readiness` must prove the
-installed login exchange and authenticated PIM API before warm-up or tests.
+state when the volume is new and reuses that state when it already exists. Do not infer either
+state from Apache health alone: `npm run test:readiness` must prove the installed login exchange
+and authenticated PIM API before warm-up or tests.
 
 ## Demo parity: why `admin123` needs two adjustments
 
@@ -69,12 +71,16 @@ changes no test behaviour — the documented `Admin` / `admin123` contract is pr
 
 The installer is never part of a test run.
 
-## Phase B — restore many (every run)
+## Phase B — run many
 
-`docker compose up` restores `db/seed.sql` into a fresh MySQL data dir and mounts
-`Conf.php`, so the app is intended to come up installed and clean. The bounded readiness command
-proves that contract rather than trusting the web-server response. To force a re-restore (the init script
-only fires on an empty data dir), recreate the database volume between runs:
+`docker compose up` restores `db/seed.sql` into a fresh MySQL data dir and mounts `Conf.php`, so
+the app comes up installed. On an existing local volume it reuses the database; unique scenario
+identities and ownership-checked `After` cleanup return healthy runs to their pre-run baseline.
+The bounded readiness command proves the application contract rather than trusting the web-server
+response.
+
+To recover from an interrupted process or deliberately return to the committed seed, recreate the
+database and app volumes (the MySQL init script only fires on an empty data dir):
 
 ```bash
 docker compose down -v && docker compose up -d --wait   # wipes both volumes, restores seed

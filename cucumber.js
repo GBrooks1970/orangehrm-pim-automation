@@ -6,7 +6,8 @@
 // LOCAL-ONLY subset: it excludes quarantined scenarios, any that change state
 // (@changesState), any explicitly confined to the local target (@localOnly), and
 // scenarios tagged for API seeding (@seedsData). It currently selects one employee-
-// search scenario whose feature Background can still create a missing fixture.
+// search scenario whose feature Background creates a unique, scenario-owned fixture
+// and whose After hook removes that exact record.
 // Every profile loads the fail-fast loopback guard in browser.hooks.ts; `smoke`
 // describes selection breadth, never permission to target the shared public demo.
 

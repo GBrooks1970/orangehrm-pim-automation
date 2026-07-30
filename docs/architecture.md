@@ -59,11 +59,12 @@ Organised by Screenplay layer, one folder each:
 | `npm test` | Run the active suite (excludes `@deferred`) |
 | `npm run test:unit` | Run the fast SUT-independent API-policy and target-safety tests |
 | `npm run test:readiness` | Bounded proof of installed login plus authenticated PIM API readiness |
-| `npm run test:api-contract` | Against local Docker, prove exact employee create/reuse/read-back semantics |
+| `npm run test:api-contract` | Against local Docker, prove unique employee create/reuse/read-back/cleanup semantics |
 | `npm run test:smoke:local` | Run the one-scenario local smoke selection |
 | `npm run test:target-contract` | Prove every profile loads the pre-browser loopback guard |
+| `npm run test:project-contract` | Prove 7/1 scenario counts, CI command order, image/report contracts, and relative links |
 | `npm audit --audit-level=high` | Gate the locked test/report toolchain against High advisories |
-| `npx tsc --noEmit` | TypeScript type check |
+| `npm run typecheck` | TypeScript type check |
 | `HEADLESS=false npm test` | Run with a visible browser for debugging |
 | `npm run test:report` | Generate the Serenity living-documentation report |
 
@@ -124,32 +125,37 @@ so there is no analogue to the Magento decline module.
 
 ## 4. Runtime sequence
 
-What happens when `npm test` runs:
+What happens in CI and then inside `npm test`:
 
-1. Cucumber discovers `features/**/*.feature`, skipping `@deferred` (none currently).
-2. `ts-node/register` compiles TypeScript on the fly.
-3. `src/serenity.config.ts` configures the reporter crew.
-4. `src/hooks/browser.hooks.ts` registers `BeforeAll`, `Before`, `After`, `AfterAll`.
-5. Once per run: `BeforeAll` rejects a non-loopback `BASE_URL` before it launches Chromium or
-   authenticates the API client, then holds the local admin session cookie for seeding.
-6. After Compose transport health, `test:readiness` rejects the installer/broken configuration
-   and proves the installed login plus authenticated PIM API within a strict deadline.
-7. In CI, `test:api-contract` proves the authenticated employee fixture boundary against the
-   running local API before Cucumber begins.
-8. Per scenario: `Before` creates an ownership registry, resets browser state, and engages the
+1. CI installs dependencies, then runs typecheck, lower-level tests, the High audit, and the
+   target contract before downloading a browser or starting Docker.
+2. `test:project-contract` executes both dry-run profiles and checks declared CI commands,
+   immutable image/report contracts, the historical-plan marker, and links.
+3. CI installs Chromium and starts the pinned Compose services, whose healthchecks prove only
+   database/Apache transport availability.
+4. `test:readiness` rejects the installer/broken configuration and proves the installed login plus
+   authenticated PIM API within a strict deadline.
+5. `test:api-contract` proves unique create/reuse/read-back/cleanup against the running local API.
+6. `npm test` starts: Cucumber discovers `features/**/*.feature`, skipping `@deferred` (none).
+7. `ts-node/register` compiles TypeScript on the fly and `src/serenity.config.ts` configures the
+   reporter crew.
+8. `src/hooks/browser.hooks.ts` registers `BeforeAll`, `Before`, `After`, `AfterAll`.
+9. Once per run: `BeforeAll` rejects a non-loopback `BASE_URL` before it launches Chromium or
+   authenticates the API client, then holds the local admin session cookie.
+10. Per scenario: `Before` creates an ownership registry, resets browser state, and engages the
    actor with `BrowseTheWebWithPlaywright` plus an empty `TakeNotes` notepad. API setup
    (authentication and unique employee creation) runs through a dedicated module-level client,
    deliberately outside the actor model (ADR-0003).
-9. Cucumber matches steps to `src/step-definitions/`.
-10. Step definitions call `actorCalled('User').attemptsTo(Task...)` or
+11. Cucumber matches steps to `src/step-definitions/`.
+12. Step definitions call `actorCalled('User').attemptsTo(Task...)` or
    `Ensure.that(Question, matcher)`.
-11. Tasks decompose to Interactions against Playwright.
-12. `Wait.upTo(...).until(element, isVisible())` guards every async Vue transition; the
+13. Tasks decompose to Interactions against Playwright.
+14. `Wait.upTo(...).until(element, isVisible())` guards every async Vue transition; the
     default ceiling is too short for a cold SPA, so it is set explicitly.
-13. Per scenario: `After` deletes only exact employee records captured by that registry and
+15. Per scenario: `After` deletes only exact employee records captured by that registry and
     verifies any captured user is no longer enabled; already UI-deleted records are accepted.
-14. Once per run: `AfterAll` closes the browser.
-15. The ArtifactArchiver writes Serenity JSON to `docs/reports/`; `npm run test:report`
+16. Once per run: `AfterAll` closes the browser.
+17. The ArtifactArchiver writes Serenity JSON to `docs/reports/`; `npm run test:report`
     renders the HTML living documentation, published by CI.
 
 ## 5. SUT-specific constraints
@@ -162,7 +168,7 @@ What happens when `npm test` runs:
 | Issued employee account | Retain the unique username and employee identity per scenario; mask the password; verify the exact enabled admin-API association, then perform a fresh employee login | Creating the employee record alone does not prove that OrangeHRM created a usable account | `ScenarioNotes`, `IssuedAccount`, `CurrentUser` |
 | Employee Id auto-fill | Read or override the auto-filled Employee Id deliberately | The form pre-fills the next Id; assertions and the duplicate-id case depend on a known value | `AddEmployee` task |
 | Autocomplete search | Wait for the result option to render before selecting | The employee-name search is a debounced async autocomplete | Task-level wait |
-| Data setup | Seed employees through REST API v2, not the UI | UI creation is slow and is the behaviour under test elsewhere | ADR-0003 |
+| Prerequisite data setup | Create prerequisite employees through REST API v2, not the UI | UI creation is slow and is the behaviour under test in the add-employee scenarios | ADR-0003 |
 | Fixture identity | Treat only a successful empty lookup as absent; parse the duplicate validation payload; read back exact Employee Id/name/`empNumber` | HTTP 422 also represents unrelated validation errors, and stale records can satisfy loose lookup logic | `EmployeeFixtureClient`, unit + API contract tests |
 | Persistent-volume isolation | Generate a unique physical name/Employee Id for every scenario, retain exact created `empNumber` and user id, and delete only after matching the captured identity | Stable human-readable fixtures accumulate and can make a later run pass against earlier data | `ScenarioOwnership`, `After` cleanup, unit + repeated-volume tests |
 | Shared demo non-determinism | Reject every non-loopback execution target before browser/API setup | The public demo is shared and even the smoke Background creates then removes a scenario-owned record | ADR-0002, `target-safety.ts` |
@@ -175,6 +181,6 @@ row), never the transient success toast that flashes after save.
 ## 6. Known issues and technical debt
 
 The suite has been built to green since 2026-06-23. Open items are tracked in
-`docs/backlog.md` (Items #1–#6 and CODEX-01–10 are closed; CODEX-11 remains open); the historical build order is
+`docs/backlog.md` (Items #1–#6 and CODEX-01–12 are closed; CODEX-13 remains open); the historical build order is
 recorded in `docs/implementation-plan.md`. The local image tag and seeded-database path
 (backlog #1) that the whole suite asserts against was confirmed during that build.

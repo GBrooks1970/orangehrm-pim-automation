@@ -8,7 +8,7 @@ This plan takes the scaffold to a green PIM suite without re-deriving any decisi
 the steps in order. Every new capability is two commits: the spec on its own, then the
 implementation that references the scenario it satisfies.
 
-## Current state
+## Historical starting state
 
 In place: repository structure, the three PIM feature specifications, the four project docs,
 three ADRs, the CI and docker-compose skeletons, and the empty Screenplay layers under
@@ -27,7 +27,7 @@ SDD ordering is correct by construction.
 - See ADR-0001 (Screenplay over Page Objects), ADR-0002 (local Docker target over the shared
   demo), ADR-0003 (API-driven setup).
 
-## Step-by-step next actions
+## Original step-by-step actions
 
 1. **Seed the target once (Phase A).** The image is pinned to `orangehrm/orangehrm:5.8.1`
    (see `docs/docker-image-decision.md`). Stand up `docker compose up`, run the web installer,
@@ -63,7 +63,7 @@ SDD ordering is correct by construction.
   it took before the UI step.
 - **Shared-demo non-determinism:** run state-changing scenarios against the local target only.
 
-## Definition of done for the scaffold
+## Original definition of done
 
 - [x] Repository structure created; empty layers carry `.gitkeep`.
 - [x] Four project docs instantiated for OrangeHRM PIM.
@@ -77,7 +77,7 @@ SDD ordering is correct by construction.
       native filesystem. The history then continues spec-first: project setup, Phase A
       provisioning, then one implementation commit per feature.
 
-## Longer-term: portfolio-credibility checklist
+## Historical portfolio-credibility checklist
 
 - [x] Commit history shows specs before implementation, kept that way.
 - [x] ADRs justify Screenplay-over-POM, the local target, and API setup, each with a concrete

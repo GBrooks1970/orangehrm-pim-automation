@@ -3,7 +3,7 @@
 The feature files are the specification for the OrangeHRM PIM section journey. They are
 committed before the step definitions and Tasks that satisfy them (SDD). Each scenario is
 declarative: it states intent, not UI mechanics, and never mentions time. Setup is arranged
-through the REST API ability in the Background; the behaviour under test drives the UI.
+through the dedicated REST API client in the Background; the behaviour under test drives the UI.
 
 | Feature file | Scenarios | Scope | Tags |
 |---|---|---|---|
@@ -16,12 +16,11 @@ through the REST API ability in the Background; the behaviour under test drives 
 **Local smoke subset** (`smoke` profile): scenarios that are neither quarantined, state-changing
 (`@changesState`), confined to the local target (`@localOnly`), nor Background-seeded via an
 API write (`@seedsData`). Exactly **1 scenario** qualifies — employee search. Its feature
-Background can still create the employee through the API (`docs/backlog.md` #4), so the profile
-is local-only despite the read-only UI query. Every profile loads a fail-fast loopback guard;
+Background creates a unique employee through the API and the `After` hook removes that exact
+scenario-owned record, so the profile is local-only despite the read-only UI query. Every
+profile loads a fail-fast loopback guard;
 the shared public demo is not an executable target. The two `pim-validation.feature` scenarios
 remain outside this narrower local selection.
 
-No PIM behaviour here needs a controllable test fixture, so there is no `@deferred`
-scenario in this suite. That is a difference from the Magento reference, where a forced
-payment decline required an injected module. PIM's negative paths are reachable with valid
-inputs alone.
+No PIM behaviour is blocked on an unavailable fixture, so there is no `@deferred` scenario in
+this suite. The PIM negative paths are reachable with valid inputs and scenario-owned local data.

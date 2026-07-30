@@ -59,8 +59,8 @@ closed-browser error. Launch once, close once.
 | `BrowseTheWebWithPlaywright` | `@serenity-js/playwright` | Drive the PIM UI |
 | `TakeNotes` | `@serenity-js/core` | Retain generated account and employee identity within one scenario |
 
-The actor is given browsing and a fresh typed notepad for each scenario. API setup
-(authentication and seeding) runs
+The actor is given browsing and a fresh typed notepad for each scenario. API setup and cleanup
+(authentication, unique creation, exact read-back, and guarded deletion) run
 through a dedicated module-level client (`src/api/OrangeHrmApiClient.ts`), deliberately outside
 the Screenplay actor model — see [ADR-0003](adr/0003-api-driven-setup.md) for the rationale.
 OrangeHRM's REST API v2 authenticates with the logged-in session cookie (and a CSRF token
@@ -79,7 +79,7 @@ here, out of the feature files, means an OrangeHRM restyle changes one Interacti
 
 | Task | Description |
 |---|---|
-| `LogInAsAdmin.now()` | UI login, used where login itself matters; most scenarios get the session via the API ability |
+| `LogInAsAdmin.now()` | Inject the authenticated admin session cookie into the browser and open the dashboard; it does not drive the login form |
 | `AddEmployee.named(first, last)` | Open Add Employee, fill the name, and save |
 | `AddEmployee.withLoginDetails(first, last)` | Create the employee and a uniquely named enabled account; retain the issued identity in scenario notes and mask its password |
 | `IssuedAccount.isEnabledForItsEmployee()` / `.signIn()` | Verify the exact enabled username/employee association via the admin API, then clear the admin session and perform a real employee login |
@@ -91,7 +91,7 @@ here, out of the feature files, means an OrangeHRM restyle changes one Interacti
 | Question | Returns | Assertion pattern |
 |---|---|---|
 | `EmployeeListRows.matching(name)` | The matching list rows | `isPresent()` / `not(isPresent())` |
-| `PersonalDetails.name()` | The name on the record | `equals("Aurora Vega")` |
+| `PersonalDetails.name()` | The generated physical name on the record | `equals(scenarioOwnership().resolveEmployeeName("Aurora Vega"))` |
 | `PersonalDetails.nationality()` | The selected nationality | `equals("British")` |
 | `ValidationMessage.forField(field)` | The field's error text | `includes("Required")` |
 | `CurrentUser.name()` | The signed-in employee's top-bar name | `equals(notes().get("issuedEmployeeName"))` |
@@ -126,5 +126,5 @@ Wait.upTo(Duration.ofSeconds(15)).until(EmployeeListPage.firstAutocompleteOption
 | Timeout on the add-employee form | `BASE_URL` unreachable, or the SPA still booting | Confirm the stack is up; cold renders need the explicit `Wait.upTo` ceilings |
 | Only the first scenario passes | Browser launched/closed per scenario | Launch once in `BeforeAll`, close in `AfterAll` |
 | Search returns nothing | Asserting before the debounced lookup rendered | Wait for the result row before asserting |
-| Duplicate-id scenario passes wrongly | The seeded employee id did not actually take | Confirm the API seed set the exact Employee Id the scenario reuses |
+| Duplicate-id scenario passes wrongly | The unique prerequisite Employee Id was not persisted or the UI reused a different value | Confirm the API read-back and UI step resolve the same scenario-owned Employee Id |
 | Assertion races a vanishing toast | Asserting on the success toast | Assert on the list row or the record instead |

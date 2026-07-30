@@ -41,12 +41,15 @@ Before merge, run:
 
 ```bash
 npm ci
+npm run typecheck
+npm run test:unit
 npm audit --audit-level=high
 npm run test:target-contract
-npm run typecheck
-npx cucumber-js --profile default --dry-run
-npx cucumber-js --profile smoke --dry-run
+npm run test:project-contract
 ```
+
+`test:project-contract` executes both dry-run profiles and enforces the exact 7/1 scenario counts,
+so the standalone dry-run commands need not be repeated in this recipe.
 
 The pull-request workflow must then pass the clean Docker-backed 7/7 suite, verify non-empty
 Serenity JSON, render the living documentation, upload the report artifact, and tear the stack
