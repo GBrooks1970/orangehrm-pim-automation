@@ -1,6 +1,6 @@
 # Code Review: orangehrm-pim-automation
 
-**Reviewer:** AI assistant (Claude 3.7 Sonnet)
+**Reviewer:** AI assistant (Gemini)
 **Date:** 2026-08-07T14:10Z
 **Scope:** Full codebase review of orangehrm-pim-automation
 **Version:** v1
@@ -34,7 +34,7 @@ Read [01_EXECUTIVE_SUMMARY.md](01_EXECUTIVE_SUMMARY.md) for a high-level assessm
 
 ---
 
-[Back to Index](00_CODE_REVIEW_CLAUDE_3_7_SONNET_v1_20260807T1410Z.md) | [Next: Executive Summary ->](01_EXECUTIVE_SUMMARY.md)
+[Back to Index](00_CODE_REVIEW_Gemini_v1_20260807T1410Z.md) | [Next: Executive Summary ->](01_EXECUTIVE_SUMMARY.md)
 ```
 
 ---

@@ -1,8 +1,8 @@
 # Annex: Test Strategy
 
-[<- Back to Index](../00_CODE_REVIEW_CLAUDE_3_7_SONNET_v1_20260807T1410Z.md)
+[<- Back to Index](../00_CODE_REVIEW_Gemini_v1_20260807T1410Z.md)
 
-**Reviewer:** AI assistant (Claude 3.7 Sonnet)
+**Reviewer:** AI assistant (Gemini)
 
 ## Suite Structure & Profile Execution
 
@@ -19,7 +19,7 @@
 
 ---
 
-[<- Previous: Migration Plans](../07_MIGRATION_PLANS.md) | [Back to Index](../00_CODE_REVIEW_CLAUDE_3_7_SONNET_v1_20260807T1410Z.md)
+[<- Previous: Migration Plans](../07_MIGRATION_PLANS.md) | [Back to Index](../00_CODE_REVIEW_Gemini_v1_20260807T1410Z.md)
 ```
 
 ---
@@ -31,13 +31,13 @@ Please perform the following Git operations inside `orangehrm-pim-automation`:
 2. Switch to `main`: `git checkout main`
 3. Pull default branch: `git pull --ff-only`
 4. Create review branch: `git checkout -b review/orangehrm-pim-automation-claude-3-7-sonnet-v1`
-5. Write the 9 review files above into `.review/CODE_REVIEW_CLAUDE_3_7_SONNET_v1_20260807T1410Z/`
-6. Commit changes: `git add .review/CODE_REVIEW_CLAUDE_3_7_SONNET_v1_20260807T1410Z/ && git commit -m "docs(review): add comprehensive code review v1 by Claude 3.7 Sonnet"`
-7. Push branch and open PR using GitHub CLI: `gh pr create --title "docs(review): add code review v1 for orangehrm-pim-automation" --body "Comprehensive code review v1 conducted by Claude 3.7 Sonnet."`
+5. Write the 9 review files above into `.review/CODE_REVIEW_Gemini_v1_20260807T1410Z/`
+6. Commit changes: `git add .review/CODE_REVIEW_Gemini_v1_20260807T1410Z/ && git commit -m "docs(review): add comprehensive code review v1 by Gemini"`
+7. Push branch and open PR using GitHub CLI: `gh pr create --title "docs(review): add code review v1 for orangehrm-pim-automation" --body "Comprehensive code review v1 conducted by Gemini."`
 8. **DO NOT MERGE THE PR.**
 
 ---
 
 ## 4. Final Reporting Block
 
-**Review Directory:** `orangehrm-pim-automation/.review/CODE_REVIEW_CLAUDE_3_7_SONNET_v1_20260807T1410Z/`
+**Review Directory:** `orangehrm-pim-automation/.review/CODE_REVIEW_Gemini_v1_20260807T1410Z/`

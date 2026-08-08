@@ -1,8 +1,8 @@
 # Risks and Issues
 
-[<- Back to Index](00_CODE_REVIEW_CLAUDE_3_7_SONNET_v1_20260807T1410Z.md) | [Next: Project Review ->](03_PROJECT_REVIEWS/PROJECT_001_ORANGEHRM_PIM_AUTOMATION.md)
+[<- Back to Index](00_CODE_REVIEW_Gemini_v1_20260807T1410Z.md) | [Next: Project Review ->](03_PROJECT_REVIEWS/PROJECT_001_ORANGEHRM_PIM_AUTOMATION.md)
 
-**Reviewer:** AI assistant (Claude 3.7 Sonnet)
+**Reviewer:** AI assistant (Gemini)
 
 Prioritised list of remaining technical debt and maintenance risks in `orangehrm-pim-automation`:
 
@@ -43,7 +43,7 @@ Prioritised list of remaining technical debt and maintenance risks in `orangehrm
 
 ---
 
-[<- Previous: Executive Summary](01_EXECUTIVE_SUMMARY.md) | [Back to Index](00_CODE_REVIEW_CLAUDE_3_7_SONNET_v1_20260807T1410Z.md) | [Next: Project Review ->](03_PROJECT_REVIEWS/PROJECT_001_ORANGEHRM_PIM_AUTOMATION.md)
+[<- Previous: Executive Summary](01_EXECUTIVE_SUMMARY.md) | [Back to Index](00_CODE_REVIEW_Gemini_v1_20260807T1410Z.md) | [Next: Project Review ->](03_PROJECT_REVIEWS/PROJECT_001_ORANGEHRM_PIM_AUTOMATION.md)
 ```
 
 ---
