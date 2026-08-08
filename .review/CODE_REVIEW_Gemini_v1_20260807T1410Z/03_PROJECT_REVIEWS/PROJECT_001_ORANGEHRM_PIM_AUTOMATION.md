@@ -1,8 +1,8 @@
 # Project Review: orangehrm-pim-automation
 
-[<- Back to Index](../00_CODE_REVIEW_CLAUDE_3_7_SONNET_v1_20260807T1410Z.md) | [Next: Cross-Cutting Analysis ->](../04_CROSS_PROJECT_ANALYSIS.md)
+[<- Back to Index](../00_CODE_REVIEW_Gemini_v1_20260807T1410Z.md) | [Next: Cross-Cutting Analysis ->](../04_CROSS_PROJECT_ANALYSIS.md)
 
-**Reviewer:** AI assistant (Claude 3.7 Sonnet)
+**Reviewer:** AI assistant (Gemini)
 
 ## Detailed Assessment
 
@@ -21,7 +21,7 @@
 
 ---
 
-[<- Previous: Risks and Issues](../02_RISKS_AND_ISSUES.md) | [Back to Index](../00_CODE_REVIEW_CLAUDE_3_7_SONNET_v1_20260807T1410Z.md) | [Next: Cross-Cutting Analysis ->](../04_CROSS_PROJECT_ANALYSIS.md)
+[<- Previous: Risks and Issues](../02_RISKS_AND_ISSUES.md) | [Back to Index](../00_CODE_REVIEW_Gemini_v1_20260807T1410Z.md) | [Next: Cross-Cutting Analysis ->](../04_CROSS_PROJECT_ANALYSIS.md)
 ```
 
 ---

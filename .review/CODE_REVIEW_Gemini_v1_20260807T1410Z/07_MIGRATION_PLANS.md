@@ -1,8 +1,8 @@
 # Migration Plans
 
-[<- Back to Index](00_CODE_REVIEW_CLAUDE_3_7_SONNET_v1_20260807T1410Z.md) | [Next: Annex: Test Strategy ->](ANNEX/TEST_STRATEGY.md)
+[<- Back to Index](00_CODE_REVIEW_Gemini_v1_20260807T1410Z.md) | [Next: Annex: Test Strategy ->](ANNEX/TEST_STRATEGY.md)
 
-**Reviewer:** AI assistant (Claude 3.7 Sonnet)
+**Reviewer:** AI assistant (Gemini)
 
 Actionable migration plans for future maintenance:
 
@@ -35,7 +35,7 @@ Actionable migration plans for future maintenance:
 
 ---
 
-[<- Previous: Architecture Assessment](06_ARCHITECTURE_ASSESSMENT.md) | [Back to Index](00_CODE_REVIEW_CLAUDE_3_7_SONNET_v1_20260807T1410Z.md) | [Next: Annex: Test Strategy ->](ANNEX/TEST_STRATEGY.md)
+[<- Previous: Architecture Assessment](06_ARCHITECTURE_ASSESSMENT.md) | [Back to Index](00_CODE_REVIEW_Gemini_v1_20260807T1410Z.md) | [Next: Annex: Test Strategy ->](ANNEX/TEST_STRATEGY.md)
 ```
 
 ---

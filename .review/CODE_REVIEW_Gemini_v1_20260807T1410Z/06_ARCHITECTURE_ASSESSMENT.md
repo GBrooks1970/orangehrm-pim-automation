@@ -1,8 +1,8 @@
 # Architecture Assessment
 
-[<- Back to Index](00_CODE_REVIEW_CLAUDE_3_7_SONNET_v1_20260807T1410Z.md) | [Next: Migration Plans ->](07_MIGRATION_PLANS.md)
+[<- Back to Index](00_CODE_REVIEW_Gemini_v1_20260807T1410Z.md) | [Next: Migration Plans ->](07_MIGRATION_PLANS.md)
 
-**Reviewer:** AI assistant (Claude 3.7 Sonnet)
+**Reviewer:** AI assistant (Gemini)
 
 Architectural evaluation against key software engineering and test automation standards:
 
@@ -21,7 +21,7 @@ Architectural evaluation against key software engineering and test automation st
 
 ---
 
-[<- Previous: Recommendations](05_RECOMMENDATIONS.md) | [Back to Index](00_CODE_REVIEW_CLAUDE_3_7_SONNET_v1_20260807T1410Z.md) | [Next: Migration Plans ->](07_MIGRATION_PLANS.md)
+[<- Previous: Recommendations](05_RECOMMENDATIONS.md) | [Back to Index](00_CODE_REVIEW_Gemini_v1_20260807T1410Z.md) | [Next: Migration Plans ->](07_MIGRATION_PLANS.md)
 ```
 
 ---
