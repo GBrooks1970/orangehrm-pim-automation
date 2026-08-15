@@ -69,9 +69,9 @@ for (const command of orderedCiCommands) {
     previousIndex = index;
 }
 
-assert.match(workflow, /actions\/setup-node@v7[\s\S]*?node-version:\s*24/);
-assert.equal(read('.nvmrc').trim(), '24');
-assert.equal(manifest.engines?.node, '>=24 <25');
+assert.match(workflow, /actions\/setup-node@v7[\s\S]*?node-version:\s*24\.19\.0/);
+assert.equal(read('.nvmrc').trim(), '24.19.0');
+assert.equal(manifest.engines?.node, '>=24.15.0 <25');
 assert.match(workflow, /find docs\/reports -name 'scenario-\*\.json'/);
 assert.match(workflow, /path:\s*target\/site\/serenity/);
 
