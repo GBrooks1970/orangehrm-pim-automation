@@ -13,12 +13,14 @@ they are not dismissed solely because the packages are development dependencies.
   diff, licence implications, and advisory paths before accepting an update.
 - Keep every direct `@serenity-js/*` package on one exact version. Pin Playwright to the version
   required by `@serenity-js/playwright` rather than updating the browser driver independently.
-- Use the Node major declared by `package.json`, `.nvmrc`, and CI. A framework engine-floor change
-  must update all three in the same PR.
+- Use the Node range declared by `package.json` and the tested patch declared by `.nvmrc` and CI.
+  A framework engine-floor change must update all three in the same PR. Serenity/JS 3.44.3
+  requires Node 24.15.0 or newer on the repository's Node 24 line; local and CI execution use
+  Node 24.19.0.
 - Dependabot holds TypeScript below 6 while `ts-node` 10.9.2 and the CommonJS configuration remain
-  incompatible, `@types/node` on the Node 24 line, and Playwright on the 1.61 line required by
-  Serenity/JS 3.44.1. Remove a hold only in the aligned toolchain PR that proves the replacement
-  runtime/compiler or Serenity peer range through the full verification below.
+  incompatible, `@types/node` on the Node 24 line, and Playwright on the 1.62 line required by
+  Serenity/JS 3.44.3. Remove or advance a hold only in the aligned toolchain PR that proves the
+  replacement runtime/compiler or Serenity peer range through the full verification below.
 
 ### TypeScript compatibility hold
 
