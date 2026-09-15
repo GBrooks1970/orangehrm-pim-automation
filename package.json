@@ -26,7 +26,7 @@
     "@serenity-js/playwright": "3.46.1",
     "@serenity-js/serenity-bdd": "3.46.1",
     "@serenity-js/web": "3.46.1",
-    "@types/node": "24.13.3",
+    "@types/node": "24.13.4",
     "playwright": "1.62.1",
     "ts-node": "^10.9.0",
     "typescript": "5.9.3"
