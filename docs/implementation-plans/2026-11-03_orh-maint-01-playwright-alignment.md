@@ -6,7 +6,7 @@ type: implementation-plan
 item: ORH-MAINT-01
 status: implemented
 approved: 2026-11-03
-delivered: 2026-11-03 (local gates and 7/7 Docker E2E green; PR CI pending merge)
+delivered: 2026-11-03 (PR #50 CI run 41695679629 green; awaiting owner merge)
 language: en-GB
 ---
 
@@ -88,4 +88,5 @@ Implemented on 3 November 2026 on branch `codex/orangehrm-playwright-alignment`:
 - Refreshed transitive `follow-redirects` from `1.16.0` to `1.16.2` within `axios@1.20.0`'s existing `^1.16.0` range, clearing 3 High advisories (`GHSA-q3jh-wrc6-jgq8`, `GHSA-8r9p-f939-6h3c`, `GHSA-mrwp-f3q8-3g9p`) so `npm audit --audit-level=high` exits 0 with 0 vulnerabilities.
 - Advanced `.github/dependabot.yml` Playwright hold from `>=1.63.0` to `>=1.64.0` and updated `docs/dependency-policy.md`.
 - Added `scripts/playwright-compatibility.ts` and `tests/unit/playwright-compatibility.test.ts` (6 unit tests including the captured `1.62.1` / `~1.63.0` split-core must-fail check) and wired the check into `scripts/verify-project-contract.ts`.
-- Verified clean `npm ci`, `npm run typecheck` (0 errors), `npm run test:unit` (32/32 pass), `npm audit --audit-level=high` (0 vulnerabilities), `npm run test:target-contract`, `npm run test:project-contract` (`default=7`, `smoke=1`, 26 Markdown files), and against the local Docker stack on `E:\_DockerData`: `npm run test:readiness` (1,449 ms), `npm run test:api-contract` (1/1), and `npm test` (7/7 scenarios passing in 53.37s). Logged in `docs/implementation-logs/2026-11-03_orh-maint-01-playwright-alignment.md`.
+- Verified clean `npm ci`, `npm run typecheck` (0 errors), `npm run test:unit` (32/32 pass), `npm audit --audit-level=high` (0 vulnerabilities), `npm run test:target-contract`, `npm run test:project-contract` (`default=7`, `smoke=1`, 26 Markdown files), and against the local Docker stack on `E:\_DockerData`: `npm run test:readiness` (1,449 ms), `npm run test:api-contract` (1/1), and `npm test` (7/7 scenarios passing in 53.37s).
+- Published draft [PR #50](https://github.com/GBrooks1970/orangehrm-pim-automation/pull/50); GitHub Actions `e2e` run [`41695679629`](https://github.com/GBrooks1970/orangehrm-pim-automation/actions/runs/41695679629) passed in 2m55s across all steps (including clean-volume Docker 7/7, Serenity HTML report rendering, Pages artifact upload, and teardown). Logged in `docs/implementation-logs/2026-11-03_orh-maint-01-playwright-alignment.md`.

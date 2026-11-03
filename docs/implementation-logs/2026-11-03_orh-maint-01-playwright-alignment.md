@@ -29,8 +29,9 @@ Actioned the approved `ORH-MAINT-01` implementation plan (`docs/implementation-p
 | OrangeHRM | `npm run test:readiness` | Skipped in CI after `Type-check` | Ready in 1 attempt (1,449 ms; 1 employee record probed) | ✅ PASS |
 | OrangeHRM API | `npm run test:api-contract` | Skipped in CI after `Type-check` | 1/1 test (1,095 ms; total 4,258 ms) | ✅ PASS |
 | Playwright E2E | `npm test` | Skipped in CI after `Type-check` | 7/7 scenarios passed (53.37s test time / 57.55s real time; 241 scenario JSON files retained) | ✅ PASS |
+| GitHub Actions CI | `e2e` workflow ([PR #50](https://github.com/GBrooks1970/orangehrm-pim-automation/pull/50)) | ❌ FAIL (run `35924973904` at `Type-check`) | Run [`41695679629`](https://github.com/GBrooks1970/orangehrm-pim-automation/actions/runs/41695679629) green in 2m55s (incl. clean-volume Docker 7/7, Serenity HTML report render, Pages artifact upload, and teardown) | ✅ PASS |
 
-`npm ci` installed 212 packages and audited 213 packages with 0 vulnerabilities on local Node `v24.18.0`. `npm ls playwright playwright-core @serenity-js/playwright` confirmed both consumers share the single root `playwright-core@1.63.0`. Note: local host does not have a Java runtime installed (`java` not on `PATH`), so HTML report rendering via `serenity-bdd run` is verified by the GitHub Actions `e2e` runner (where Java is pre-installed).
+`npm ci` installed 212 packages and audited 213 packages with 0 vulnerabilities on local Node `v24.18.0`. `npm ls playwright playwright-core @serenity-js/playwright` confirmed both consumers share the single root `playwright-core@1.63.0`. Note: local host does not have a Java runtime installed (`java` not on `PATH`), and HTML report rendering via `serenity-bdd run` + Pages artifact upload passed on the GitHub Actions `e2e` runner in run [`41695679629`](https://github.com/GBrooks1970/orangehrm-pim-automation/actions/runs/41695679629).
 
 ---
 
