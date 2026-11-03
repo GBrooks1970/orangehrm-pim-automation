@@ -2,16 +2,25 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, extname, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import {
+    verifyPlaywrightSerenityCompatibility,
+    type LockfileInput,
+    type PackageManifestInput,
+} from './playwright-compatibility';
 
-interface PackageManifest {
+interface PackageManifest extends PackageManifestInput {
     engines?: { node?: string };
     scripts?: Record<string, string>;
 }
 
 const read = (path: string): string => readFileSync(resolve(path), 'utf8');
 const manifest = JSON.parse(read('package.json')) as PackageManifest;
+const lockfile = JSON.parse(read('package-lock.json')) as LockfileInput;
+const dependabotYaml = read('.github/dependabot.yml');
 const scripts = manifest.scripts ?? {};
 const workflow = read('.github/workflows/ci.yml');
+
+verifyPlaywrightSerenityCompatibility(manifest, lockfile, dependabotYaml);
 
 const scenarioCountFor = (profile: string): number => {
     const cucumber = resolve('node_modules/@cucumber/cucumber/bin/cucumber.js');
