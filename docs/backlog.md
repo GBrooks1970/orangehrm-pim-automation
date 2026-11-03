@@ -39,7 +39,15 @@ Items #1–#6 remain closed.
 | CODEX-12 | Low | Migrate workflow actions off deprecated Node 20 runtimes | Closed (2026-07-29) | Dependabot PR #22 upgraded `actions/setup-node` to v7; main CI passed the full Docker suite, report upload/Pages deployment, and teardown without the earlier Node 20 action-runtime annotation. |
 | CODEX-13 | Low | Extend the TypeScript compatibility hold to exclude 6.x until the ts-node/CommonJS path is migrated | Closed (2026-07-30) | Dependabot now ignores TypeScript `>=6.0.0`. The dependency policy records PR #23/run 30411439521 failing at the early typecheck gate with TS5107 (`moduleResolution: "node"` → deprecated `node10`), rejects `ignoreDeprecations` as a release fix, and requires an aligned loader/runtime plus module-resolution migration to pass static, exact 7/1 discovery, Docker 7/7, report, teardown, and live CI gates before lifting the hold. `test:project-contract` protects the ignore boundary and evidence/release markers. |
 
+## Maintenance (2026-11)
+
+| ID | Priority | Item | Status | Acceptance and dependency |
+|---|---|---|---|---|
+| ORH-MAINT-01 | High | Restore aligned Playwright and Serenity types and enforce single-core peer compatibility | Closed (2026-11-03) | Default-branch `e2e` run [35924973904](https://github.com/GBrooks1970/orangehrm-pim-automation/actions/runs/35924973904) failed `Type-check` at `src/hooks/browser.hooks.ts(80,46)` with `TS2345` because direct `@serenity-js/*@3.47.2` required peer `playwright-core: ~1.63.0` while `playwright` remained at `1.62.1` (resolving two conflicting `playwright-core` versions: `1.63.0` and `1.62.1`). Aligned `playwright` to `1.63.0` while retaining `@serenity-js/*@3.47.2`, refreshed `follow-redirects` (`1.16.0` → `1.16.2`) within `axios`'s existing `^1.16.0` range so `npm audit --audit-level=high` reports 0 vulnerabilities, advanced the Dependabot Playwright hold to `>=1.64.0`, and enforced in `scripts/playwright-compatibility.ts` (wired into `test:project-contract` with 6 unit tests in `tests/unit/playwright-compatibility.test.ts`) that all direct `@serenity-js/*` versions match, `playwright`'s locked core version satisfies `@serenity-js/playwright`'s peer range, only one resolved `playwright-core` version exists in `package-lock.json`, and the Dependabot Playwright hold matches the active peer line. Verified via local `typecheck`, `test:unit` (32/32), `npm audit --audit-level=high` (0 vulnerabilities), `test:target-contract`, `test:project-contract` (default=7, smoke=1, 26 Markdown files), local Docker `test:readiness` (1,449 ms), `test:api-contract` (1/1), and full 7/7 E2E suite (53.37s). |
+
 **Outstanding:** 0 — 0 High, 0 Medium, 0 Low. CODEX-01–10 close the reviewed functional,
 dependency, CI, identity, readiness, image, and persistent-volume risks; CODEX-11 reconciles the
 current guides and protects their executable contracts; CODEX-12 closes the action-runtime
-annotation; CODEX-13 prevents incompatible TypeScript proposals until the execution path migrates.
+annotation; CODEX-13 prevents incompatible TypeScript proposals until the execution path migrates;
+ORH-MAINT-01 restores Serenity 3.47.2 / Playwright 1.63.0 single-core alignment and guards against
+future split-peer updates.

@@ -3,10 +3,10 @@ version: 1
 created: 2026-11-03T10:54Z
 project: orangehrm-pim-automation
 type: implementation-plan
-item: ORH-MAINT-01 (proposed; add after approval)
-status: proposed
-approved: not yet
-delivered: not yet
+item: ORH-MAINT-01
+status: implemented
+approved: 2026-11-03
+delivered: 2026-11-03 (local gates and 7/7 Docker E2E green; PR CI pending merge)
 language: en-GB
 ---
 
@@ -76,11 +76,16 @@ Only this plan, `_index.md` and the first-use template copy are produced now; no
 
 | Decision | Options | Recommended | Owner's answer |
 |---|---|---|---|
-| Remediation scope | Minimal current-Serenity alignment / combined PR44 upgrade / defer | Current Serenity 3.47.2 plus Playwright 1.63.0, with compatibility guard and hold repair | Awaiting approval |
-| PR #44 | Merge unchanged / reassess after baseline repair / include explicitly | Reassess after baseline is green; unchanged proposal is proven failing | Awaiting approval |
-| Unexpected audit blockers | Broaden automatically / return with evidence and revised scope | Return with precise findings and proposed follow-up | Awaiting approval |
-| Publication | Draft PR then owner merge / direct main | Draft PR, owner merge; separate support handover PR | Awaiting approval |
+| Remediation scope | Minimal current-Serenity alignment / combined PR44 upgrade / defer | Current Serenity 3.47.2 plus Playwright 1.63.0, with compatibility guard and hold repair | Approved (2026-11-03): Current Serenity 3.47.2 plus Playwright 1.63.0, with compatibility guard and hold repair |
+| PR #44 | Merge unchanged / reassess after baseline repair / include explicitly | Reassess after baseline is green; unchanged proposal is proven failing | Approved (2026-11-03): Reassess after baseline is green |
+| Unexpected audit blockers | Broaden automatically / return with evidence and revised scope | Return with precise findings and proposed follow-up | Approved (2026-11-03): Return with precise findings and proposed follow-up |
+| Publication | Draft PR then owner merge / direct main | Draft PR, owner merge; separate support handover PR | Approved (2026-11-03): Draft PR, owner merge; separate support handover PR |
 
 ## Outcome
 
-Investigation and proposed plan completed on 3 November 2026. Implementation has not started; no dependency or executable file was changed and no test success is claimed.
+Implemented on 3 November 2026 on branch `codex/orangehrm-playwright-alignment`:
+- Added `ORH-MAINT-01` to `docs/backlog.md`, pinned `playwright` to `1.63.0` alongside `@serenity-js/*@3.47.2`, and regenerated `package-lock.json` so both packages resolve to a single root `playwright-core@1.63.0`.
+- Refreshed transitive `follow-redirects` from `1.16.0` to `1.16.2` within `axios@1.20.0`'s existing `^1.16.0` range, clearing 3 High advisories (`GHSA-q3jh-wrc6-jgq8`, `GHSA-8r9p-f939-6h3c`, `GHSA-mrwp-f3q8-3g9p`) so `npm audit --audit-level=high` exits 0 with 0 vulnerabilities.
+- Advanced `.github/dependabot.yml` Playwright hold from `>=1.63.0` to `>=1.64.0` and updated `docs/dependency-policy.md`.
+- Added `scripts/playwright-compatibility.ts` and `tests/unit/playwright-compatibility.test.ts` (6 unit tests including the captured `1.62.1` / `~1.63.0` split-core must-fail check) and wired the check into `scripts/verify-project-contract.ts`.
+- Verified clean `npm ci`, `npm run typecheck` (0 errors), `npm run test:unit` (32/32 pass), `npm audit --audit-level=high` (0 vulnerabilities), `npm run test:target-contract`, `npm run test:project-contract` (`default=7`, `smoke=1`, 26 Markdown files), and against the local Docker stack on `E:\_DockerData`: `npm run test:readiness` (1,449 ms), `npm run test:api-contract` (1/1), and `npm test` (7/7 scenarios passing in 53.37s). Logged in `docs/implementation-logs/2026-11-03_orh-maint-01-playwright-alignment.md`.
