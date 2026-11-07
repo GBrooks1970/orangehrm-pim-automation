@@ -20,6 +20,8 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      report-uploaded: ${{ steps.upload-report.outcome == 'success' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -30,6 +32,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Verify Serenity and Playwright compatibility
+        run: npm run test:compatibility
 
       - name: Type-check
         run: npm run typecheck
@@ -85,6 +90,7 @@ jobs:
       # have written Serenity JSON. A starved stdout formatter (only one is allowed)
       # would silently produce none — render only when there is real run data.
       - name: Verify report data exists
+        id: report-data
         if: always()
         run: |
           count=$(find docs/reports -name 'scenario-*.json' -size +2c | wc -l)
@@ -96,7 +102,7 @@ jobs:
       # test failure so reviewers can inspect the failing run.
       - name: Generate living documentation
         id: render
-        if: always()
+        if: always() && steps.report-data.outcome == 'success'
         run: npm run test:report
 
       # Only upload when the render actually succeeded (review Risk 7): a failed
@@ -104,6 +110,7 @@ jobs:
       # still attempt to upload, producing a second, less specific red step that
       # obscures the real failure.
       - name: Upload Pages artifact
+        id: upload-report
         if: always() && steps.render.outcome == 'success'
         uses: actions/upload-pages-artifact@v5
         with:
@@ -114,10 +121,11 @@ jobs:
         run: docker compose down -v
 
   # Publish the living documentation to GitHub Pages from main, even on a failed
-  # run, so a broken build still produces a visible, clickable report.
+  # test run with real scenario data. Early failures with no uploaded report
+  # preserve the previously published report.
   deploy-pages:
     needs: e2e
-    if: ${{ github.ref == 'refs/heads/main' && always() }}
+    if: ${{ always() && github.ref == 'refs/heads/main' && needs.e2e.outputs.report-uploaded == 'true' }}
     runs-on: ubuntu-latest
     concurrency:
       group: pages

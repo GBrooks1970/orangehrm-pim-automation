@@ -58,6 +58,9 @@ npm audit --audit-level=high
 # Visible browser, for debugging
 HEADLESS=false npm test
 
+# Verify the framework peer contract before compilation
+npm run test:compatibility
+
 # Type check only
 npm run typecheck
 
@@ -96,7 +99,9 @@ validations. Provisioning is automated (`docker compose up` restores the seeded 
 boots installed); captured scenario-owned records are removed after both passing and failing
 cases. CI runs the fast lower-level and project-contract lanes before browser/Docker setup, then requires
 the bounded installed-login/authenticated-API readiness gate before warm-up, the employee fixture
-contract, or Cucumber. It then publishes the Serenity living documentation. See
+contract, or Cucumber. The framework compatibility gate runs before typecheck.
+CI publishes the Serenity report only when scenario data exists, rendering succeeds
+and the report artefact uploads; early failures preserve the last published report. See
 `docs/implementation-plan.md` and `db/README.md`.
 
 ## Licence
