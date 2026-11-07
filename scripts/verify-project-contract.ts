@@ -1,3 +1,4 @@
+import { verifyReportPublicationContract } from './ci-report-contract';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, extname, resolve } from 'node:path';
@@ -21,6 +22,7 @@ const scripts = manifest.scripts ?? {};
 const workflow = read('.github/workflows/ci.yml');
 
 verifyPlaywrightSerenityCompatibility(manifest, lockfile, dependabotYaml);
+verifyReportPublicationContract(workflow);
 
 const scenarioCountFor = (profile: string): number => {
     const cucumber = resolve('node_modules/@cucumber/cucumber/bin/cucumber.js');
@@ -57,6 +59,7 @@ assert.equal(
 
 const orderedCiCommands = [
     'npm ci',
+    'npm run test:compatibility',
     'npm run typecheck',
     'npm run test:unit',
     'npm audit --audit-level=high',

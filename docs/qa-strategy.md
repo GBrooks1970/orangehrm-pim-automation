@@ -27,8 +27,9 @@ before browser/API setup.
 
 ## 3. Automation gates
 
-1. **TypeScript type check:** `npm run typecheck`, zero errors, run immediately after dependency
-   installation so static defects fail before browser download or Docker startup.
+1. **Framework compatibility and TypeScript:** `npm run test:compatibility` checks the
+   Serenity/Playwright single-core peer contract immediately after installation;
+   `npm run typecheck` then requires zero compiler errors before browser download or Docker startup.
 2. **Lower-level policy tests:** `npm run test:unit`, deterministic and SUT-independent coverage
    for session-cookie parsing, loopback safety, API response/duplicate classification, exact
    requested fixture identity, scenario ownership/conflict handling, and bounded readiness
@@ -47,17 +48,19 @@ before browser/API setup.
 8. **Active suite:** `npm test` (`--tags "not @deferred"`), all pass.
 9. **Living-documentation report:** `npm run test:report`, no generation errors.
 
-The `e2e` workflow enforces the TypeScript, lower-level, High-severity audit, target-contract,
+The `e2e` workflow enforces framework compatibility, TypeScript, lower-level, High-severity audit, target-contract,
 project-contract, installed-readiness, local API contract, active-suite, and report gates on every push to `main`
 and every pull request against local Dockerised OrangeHRM.
-The cheap TypeScript, lower-level, audit, target, and project-contract gates run immediately
+The cheap compatibility, TypeScript, lower-level, audit, target, and project-contract gates run immediately
 after `npm ci`, before browser or Docker setup.
 
 ## 4. Metrics and reporting
 
 - **Run artifacts:** Serenity JSON to `docs/reports/` via ArtifactArchiver.
-- **Living documentation:** `npm run test:report` to HTML; CI publishes to GitHub Pages on
-  green `main`.
+- **Living documentation:** `npm run test:report` to HTML; CI publishes from `main` only
+  after non-empty scenario data, successful rendering and successful artefact upload. A failed
+  test run with real scenario evidence remains publishable; an early failure with no report
+  preserves the last published report.
 - **Flake monitoring:** `@deferred` quarantines anything not yet runnable (none today). A
   scenario that starts flaking is tagged and annotated with the trigger rather than left to
   fail intermittently.
@@ -118,6 +121,7 @@ process; it is not required between healthy runs.
 ```bash
 # 1. Fail cheaply before browser installation or Docker
 npm ci
+npm run test:compatibility
 npm run typecheck
 npm run test:unit
 npm audit --audit-level=high
@@ -145,6 +149,7 @@ docker compose down -v
 
 ## 7. Backlog status
 
-Tracked in `docs/backlog.md` — Items #1–#6 and CODEX-01–13 are closed; nothing remains open.
+Tracked in `docs/backlog.md` — Items #1–#6, CODEX-01–13 and ORH-MAINT-01 are closed.
+ORH-MAINT-02 records the dependency and report-publication follow-up and its merge boundary.
 The local image tag and seeded-database path the suite asserts against (backlog #1) was confirmed
 during the 2026-06-23 build.

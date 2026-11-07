@@ -64,6 +64,7 @@ Organised by Screenplay layer, one folder each:
 | `npm run test:target-contract` | Prove every profile loads the pre-browser loopback guard |
 | `npm run test:project-contract` | Prove 7/1 scenario counts, CI command order, image/report contracts, and relative links |
 | `npm audit --audit-level=high` | Gate the locked test/report toolchain against High advisories |
+| `npm run test:compatibility` | Serenity/Playwright single-core peer check before compilation |
 | `npm run typecheck` | TypeScript type check |
 | `HEADLESS=false npm test` | Run with a visible browser for debugging |
 | `npm run test:report` | Generate the Serenity living-documentation report |
@@ -127,7 +128,7 @@ so there is no analogue to the Magento decline module.
 
 What happens in CI and then inside `npm test`:
 
-1. CI installs dependencies, then runs typecheck, lower-level tests, the High audit, and the
+1. CI installs dependencies, then checks framework compatibility before typecheck, lower-level tests, the High audit, and the
    target contract before downloading a browser or starting Docker.
 2. `test:project-contract` executes both dry-run profiles and checks declared CI commands,
    immutable image/report contracts, the historical-plan marker, and links.
@@ -156,7 +157,9 @@ What happens in CI and then inside `npm test`:
     verifies any captured user is no longer enabled; already UI-deleted records are accepted.
 16. Once per run: `AfterAll` closes the browser.
 17. The ArtifactArchiver writes Serenity JSON to `docs/reports/`; `npm run test:report`
-    renders the HTML living documentation, published by CI.
+    renders the HTML living documentation. CI publishes it only after the scenario-data,
+    render and upload gates succeed, including reports from genuine failed tests. An early
+    failure with no report leaves the published site unchanged.
 
 ## 5. SUT-specific constraints
 
@@ -180,7 +183,8 @@ row), never the transient success toast that flashes after save.
 
 ## 6. Known issues and technical debt
 
-The suite has been built to green since 2026-06-23. All items in `docs/backlog.md` are closed
-(Items #1–#6 and CODEX-01–13); the historical build order is
-recorded in `docs/implementation-plan.md`. The local image tag and seeded-database path
+The original Items #1–#6, CODEX-01–13 and ORH-MAINT-01 are closed.
+ORH-MAINT-02 integrates the next compatible dependency set and closes the early-failure
+report-publication gap; its implementation and owner-merge status are recorded in `docs/backlog.md`.
+The historical build order is recorded in `docs/implementation-plan.md`. The local image tag and seeded-database path
 (backlog #1) that the whole suite asserts against was confirmed during that build.

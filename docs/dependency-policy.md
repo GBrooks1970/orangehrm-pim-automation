@@ -11,18 +11,18 @@ they are not dismissed solely because the packages are development dependencies.
   Playwright proposals because their framework and peer versions must move together. Grouping
   alone does not guarantee alignment when a hold blocks the matching Playwright minor: any
   Serenity/JS peer-minor change must advance `playwright` and its `.github/dependabot.yml` hold in
-  the same reviewed batch (`test:project-contract` enforces single-core peer alignment).
+  the same reviewed batch (`test:compatibility` runs before typecheck and `test:project-contract` also enforces single-core peer alignment).
 - Dependency PRs are never auto-merged. Review the changelog, engine and peer ranges, lockfile
   diff, licence implications, and advisory paths before accepting an update.
 - Keep every direct `@serenity-js/*` package on one exact version. Pin Playwright to the version
   required by `@serenity-js/playwright` rather than updating the browser driver independently.
 - Use the Node range declared by `package.json` and the tested patch declared by `.nvmrc` and CI.
-  A framework engine-floor change must update all three in the same PR. Serenity/JS 3.47.2
+  A framework engine-floor change must update all three in the same PR. Serenity/JS 3.49.0
   requires Node 24.15.0 or newer on the repository's Node 24 line; local and CI execution use
   Node 24.19.0.
 - Dependabot holds TypeScript below 6 while `ts-node` 10.9.2 and the CommonJS configuration remain
-  incompatible, `@types/node` on the Node 24 line, and Playwright below 1.64 while Serenity/JS
-  3.47.2 requires `playwright-core: ~1.63.0` (`playwright` pinned to `1.63.0`). Remove or advance a
+  incompatible, `@types/node` on the Node 24 line, and Playwright below 1.65 while Serenity/JS
+  3.49.0 requires `playwright-core: ~1.64.0` (`playwright` pinned to `1.64.1`). Remove or advance a
   hold only in the aligned toolchain PR that proves the replacement runtime/compiler or Serenity
   peer range through the full verification below.
 
@@ -68,6 +68,7 @@ Before merge, run:
 
 ```bash
 npm ci
+npm run test:compatibility
 npm run typecheck
 npm run test:unit
 npm audit --audit-level=high

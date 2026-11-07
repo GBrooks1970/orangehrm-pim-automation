@@ -9,25 +9,26 @@
   },
   "scripts": {
     "test": "cucumber-js --profile default --tags \"not @deferred\"",
-    "test:unit": "node --require ts-node/register --test tests/unit/api-policy.test.ts tests/unit/employee-fixture-client.test.ts tests/unit/playwright-compatibility.test.ts tests/unit/readiness.test.ts tests/unit/scenario-ownership.test.ts",
+    "test:unit": "node --require ts-node/register --test tests/unit/api-policy.test.ts tests/unit/employee-fixture-client.test.ts tests/unit/playwright-compatibility.test.ts tests/unit/readiness.test.ts tests/unit/scenario-ownership.test.ts tests/unit/ci-report-contract.test.ts",
     "test:api-contract": "node --require ts-node/register --test tests/contract/employee-fixture.contract.ts",
     "test:readiness": "ts-node scripts/verify-orangehrm-readiness.ts",
     "test:smoke:local": "cucumber-js --profile smoke",
     "test:target-contract": "ts-node scripts/verify-local-target-contract.ts",
     "test:project-contract": "ts-node scripts/verify-project-contract.ts",
     "test:report": "serenity-bdd run --source ./docs/reports --features ./features",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:compatibility": "ts-node scripts/verify-playwright-compatibility.ts"
   },
   "devDependencies": {
-    "@cucumber/cucumber": "^13.2.1",
-    "@serenity-js/console-reporter": "3.47.2",
-    "@serenity-js/core": "3.47.2",
-    "@serenity-js/cucumber": "3.47.2",
-    "@serenity-js/playwright": "3.47.2",
-    "@serenity-js/serenity-bdd": "3.47.2",
-    "@serenity-js/web": "3.47.2",
-    "@types/node": "24.13.3",
-    "playwright": "1.63.0",
+    "@cucumber/cucumber": "^13.3.0",
+    "@serenity-js/console-reporter": "3.49.0",
+    "@serenity-js/core": "3.49.0",
+    "@serenity-js/cucumber": "3.49.0",
+    "@serenity-js/playwright": "3.49.0",
+    "@serenity-js/serenity-bdd": "3.49.0",
+    "@serenity-js/web": "3.49.0",
+    "@types/node": "24.19.2",
+    "playwright": "1.64.1",
     "ts-node": "^10.9.0",
     "typescript": "5.9.3"
   }

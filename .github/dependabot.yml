@@ -21,11 +21,11 @@ updates:
       - dependency-name: "@types/node"
         versions:
           - ">=25.0.0"
-      # Serenity/JS 3.47.2 consumes playwright-core ~1.63.0; newer minors create
+      # Serenity/JS 3.49.0 consumes playwright-core ~1.64.0; newer minors create
       # two incompatible Browser type identities until the framework set moves.
       - dependency-name: playwright
         versions:
-          - ">=1.64.0"
+          - ">=1.65.0"
 
   - package-ecosystem: github-actions
     directory: /
