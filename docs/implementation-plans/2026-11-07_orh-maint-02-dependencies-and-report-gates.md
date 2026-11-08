@@ -52,3 +52,11 @@ The owner requested investigation and resolution of the stated OrangeHRM issues 
 ## Outcome
 
 Implemented on the review branch. Local clean installation, compatibility, typecheck, 37 unit tests (including five publication-chain controls), zero-vulnerability audit, target contract and exact 7/1 project contract passed. Docker-backed Linux CI and owner merge remain delivery gates at the time of this record. See the dated implementation log for captured command timings; the shared handover will record the review PR outcome.
+
+### Post-merge outcome, verified 2026-11-08
+
+[PR #52](https://github.com/GBrooks1970/orangehrm-pim-automation/pull/52) merged on 7 November 2026 at 16:46:43 UTC as `9ae80064ed358653fa687ca956cce7debc927bf0`. The original plan and earlier outcome above retain their authorship-time state.
+
+Exact-main [run 42392996933](https://github.com/GBrooks1970/orangehrm-pim-automation/actions/runs/42392996933) passed the full CI sequence: 37 unit tests, zero-vulnerability audit, default=7/smoke=1 contracts, Docker readiness, 1 API contract and 7 E2E scenarios. The e2e job took 160 seconds (16:46:48–16:49:28 UTC); report upload and teardown succeeded. Pages deployment succeeded in 8 seconds (16:49:32–16:49:40 UTC).
+
+At 01:36:56 UTC on 8 November, a fresh download of Pages artifact `13581884440` and the live site's index were identical: 66,107 bytes, SHA-256 `e5f91af8ea003af37d03557a7d4c3d3c4f5baa4b627602627cf305c88e9bfade`. The primary working copy was clean at the merge and no project PRs were open at the pre-repair check. ORH-MAINT-02 is therefore closed in the reconciled backlog. See the [post-merge closure plan](2026-11-08_orh-maint-02-postmerge-closure.md) for this documentation-only follow-up.
