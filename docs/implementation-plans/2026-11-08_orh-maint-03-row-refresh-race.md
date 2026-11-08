@@ -44,3 +44,5 @@ Update `docs/qa-strategy.md` alongside the new CI command so the documented gate
 ## Outcome
 
 The four-case real-browser suite reproduced one failure before the fix and passed 4/4 after it (runner 4.783503s). Typecheck, 37 unit tests and the project contract passed in a combined 20.476s. The project contract verifies 34 Markdown files, default=7/smoke=1, and nine ordered CI script calls. The new CI gate precedes Docker; no timeout, assertion, dependency or SUT policy was relaxed. Full PR CI and owner-controlled main acceptance remain separate delivery gates.
+
+Repaired-head [CI run 42458999397](https://github.com/GBrooks1970/orangehrm-pim-automation/actions/runs/42458999397), commit `9b7a3864c6cab7d1d7f738f0df38584ecb9e3dfe`, passed all gates: 37 unit tests, four browser contracts, one API contract and seven E2E scenarios. The job ran 07:29:34–07:31:47 UTC on 8 November (133 seconds); scenario execution summed 25.545s, real time 25.851s. Report rendering, upload and teardown succeeded; Pages deployment was correctly skipped for a PR. Owner merge and exact-main acceptance remain pending.
