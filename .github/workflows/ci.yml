@@ -56,6 +56,9 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
+      - name: Verify employee-list refresh contract
+        run: npm run test:ui-contract
+
       # Start the stack and block on database/Apache transport healthchecks. The
       # following state probe, not this transport signal, proves OrangeHRM installed.
       - name: Start OrangeHRM
