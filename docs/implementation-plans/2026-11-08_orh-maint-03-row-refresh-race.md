@@ -4,9 +4,9 @@ created: 2026-11-08T07:26Z
 project: orangehrm-pim-automation
 type: implementation-plan
 item: ORH-MAINT-03
-status: approved
+status: implemented
 approved: 2026-11-08, owner requested completion of OrangeHRM; bounded failure repair, merge remains owner-controlled
-delivered: not yet
+delivered: PR #53, merge commit 3d9dab1, 2026-11-11
 language: en-GB
 ---
 
@@ -46,3 +46,5 @@ Update `docs/qa-strategy.md` alongside the new CI command so the documented gate
 The four-case real-browser suite reproduced one failure before the fix and passed 4/4 after it (runner 4.783503s). Typecheck, 37 unit tests and the project contract passed in a combined 20.476s. The project contract verifies 34 Markdown files, default=7/smoke=1, and nine ordered CI script calls. The new CI gate precedes Docker; no timeout, assertion, dependency or SUT policy was relaxed. Full PR CI and owner-controlled main acceptance remain separate delivery gates.
 
 Repaired-head [CI run 42458999397](https://github.com/GBrooks1970/orangehrm-pim-automation/actions/runs/42458999397), commit `9b7a3864c6cab7d1d7f738f0df38584ecb9e3dfe`, passed all gates: 37 unit tests, four browser contracts, one API contract and seven E2E scenarios. The job ran 07:29:34–07:31:47 UTC on 8 November (133 seconds); scenario execution summed 25.545s, real time 25.851s. Report rendering, upload and teardown succeeded; Pages deployment was correctly skipped for a PR. Owner merge and exact-main acceptance remain pending.
+
+**Acceptance, appended 2026-11-11.** [PR #53](https://github.com/GBrooks1970/orangehrm-pim-automation/pull/53) merged at the owner's instruction as `3d9dab1267536541d58f2891515d27971a56c02c`. Exact-main [run 43099673702](https://github.com/GBrooks1970/orangehrm-pim-automation/actions/runs/43099673702) succeeded: 37 unit tests, four browser contracts, one API contract and seven E2E scenarios (three features; reported total 31.216s). The e2e job ran 21:02:36–21:05:16 UTC (160 seconds) and Pages deployment completed at 21:07:56 UTC. ORH-MAINT-03 is closed. The published report's bytes were not compared with the Pages artefact for this item.

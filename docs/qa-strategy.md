@@ -159,7 +159,7 @@ docker compose down -v
 ## 7. Backlog status
 
 Tracked in `docs/backlog.md` — Items #1–#6, CODEX-01–13 and ORH-MAINT-01 are closed.
-ORH-MAINT-02 is closed against verified main publication. ORH-MAINT-03 records the employee-row
-refresh correction and its pending owner-merge/main-acceptance boundary.
+ORH-MAINT-02 is closed against verified main publication. ORH-MAINT-03, the employee-row
+refresh correction, is closed against exact-main acceptance.
 The local image tag and seeded-database path the suite asserts against (backlog #1) was confirmed
 during the 2026-06-23 build.
