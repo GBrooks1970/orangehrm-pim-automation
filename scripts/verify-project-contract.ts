@@ -66,6 +66,7 @@ const orderedCiCommands = [
     'npm run test:target-contract',
     'npm run test:project-contract',
     'npx playwright install --with-deps chromium',
+    'npm run test:ui-contract',
     'docker compose up -d --wait',
     'npm run test:readiness',
     'npm run test:api-contract',

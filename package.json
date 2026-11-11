@@ -11,6 +11,7 @@
     "test": "cucumber-js --profile default --tags \"not @deferred\"",
     "test:unit": "node --require ts-node/register --test tests/unit/api-policy.test.ts tests/unit/employee-fixture-client.test.ts tests/unit/playwright-compatibility.test.ts tests/unit/readiness.test.ts tests/unit/scenario-ownership.test.ts tests/unit/ci-report-contract.test.ts",
     "test:api-contract": "node --require ts-node/register --test tests/contract/employee-fixture.contract.ts",
+    "test:ui-contract": "node --require ts-node/register --test tests/contract/employee-list-rows.contract.ts",
     "test:readiness": "ts-node scripts/verify-orangehrm-readiness.ts",
     "test:smoke:local": "cucumber-js --profile smoke",
     "test:target-contract": "ts-node scripts/verify-local-target-contract.ts",

@@ -40,16 +40,19 @@ before browser/API setup.
 5. **Project contract:** `npm run test:project-contract`, real default/smoke dry-runs enforce the
    exact 7/1 counts; package/CI commands and their order, Node/image/report contracts, the
    historical-plan marker, and relative Markdown links are checked before browser installation.
-6. **Installed-application readiness:** `npm run test:readiness`, a bounded state poll that rejects
+6. **Browser row contract:** `npm run test:ui-contract`, four local HTML fixture checks covering
+   populated-table refresh, delayed insertion, absent/split names and literal quotes. Runs after
+   Chromium installation, before Docker, without a live SUT.
+7. **Installed-application readiness:** `npm run test:readiness`, a bounded state poll that rejects
    installer redirects and requires both the installed login exchange and authenticated PIM API.
-7. **Local employee API contract:** `npm run test:api-contract`, against the running Docker target;
+8. **Local employee API contract:** `npm run test:api-contract`, against the running Docker target;
    creates/reuses one unique fixture, proves its exact Employee Id/name/`empNumber` read-back, and
    deletes that exact owned record before returning.
-8. **Active suite:** `npm test` (`--tags "not @deferred"`), all pass.
-9. **Living-documentation report:** `npm run test:report`, no generation errors.
+9. **Active suite:** `npm test` (`--tags "not @deferred"`), all pass.
+10. **Living-documentation report:** `npm run test:report`, no generation errors.
 
 The `e2e` workflow enforces framework compatibility, TypeScript, lower-level, High-severity audit, target-contract,
-project-contract, installed-readiness, local API contract, active-suite, and report gates on every push to `main`
+project-contract, browser row contract, installed-readiness, local API contract, active-suite, and report gates on every push to `main`
 and every pull request against local Dockerised OrangeHRM.
 The cheap compatibility, TypeScript, lower-level, audit, target, and project-contract gates run immediately
 after `npm ci`, before browser or Docker setup.
@@ -92,6 +95,10 @@ The Employee List can briefly lag a create or delete. Assert what the list settl
 needed, reload the list and poll for the row to appear or disappear, rather than trusting the
 first render after the mutation.
 
+Match rows with a browser-native selector on each poll. Sequential text filtering over a captured
+collection can keep reading removed rows after a search replaces the table, exhausting the wait
+even when the correct row is present. `test:ui-contract` reproduces and protects this boundary.
+
 ## 6. Execution recipes
 
 ### Local developer loop
@@ -101,6 +108,7 @@ npm install
 npm run test:unit                           # fast; no SUT or browser required
 npm run test:target-contract                 # no SUT; verifies every profile's loopback guard
 npm run test:project-contract                # no SUT/browser; verifies counts, CI/docs and links
+npm run test:ui-contract                     # local HTML fixtures; installed Chromium, no SUT
 BASE_URL=http://localhost:8080 npm run test:readiness     # bounded installed-app gate
 BASE_URL=http://localhost:8080 npm run test:api-contract  # requires the local stack
 npm test                                   # full active suite
@@ -130,6 +138,7 @@ npm run test:project-contract
 
 # 2. Install Chromium, then block on DB and Apache transport health
 npx playwright install --with-deps chromium
+npm run test:ui-contract
 docker compose up -d --wait
 
 # 3. Reject installer/broken Conf.php and prove authenticated API readiness
@@ -150,6 +159,7 @@ docker compose down -v
 ## 7. Backlog status
 
 Tracked in `docs/backlog.md` — Items #1–#6, CODEX-01–13 and ORH-MAINT-01 are closed.
-ORH-MAINT-02 records the dependency and report-publication follow-up and its merge boundary.
+ORH-MAINT-02 is closed against verified main publication. ORH-MAINT-03 records the employee-row
+refresh correction and its pending owner-merge/main-acceptance boundary.
 The local image tag and seeded-database path the suite asserts against (backlog #1) was confirmed
 during the 2026-06-23 build.
